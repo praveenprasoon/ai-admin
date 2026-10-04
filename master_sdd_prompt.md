@@ -1,3 +1,4 @@
+https://github.com/accumensolutions/ai-framework
 # Spec-Driven Development (SDD) Master Blueprint Prompt
 
 This document contains a comprehensive, token-optimized **Spec-Driven Development Master Prompt** that you can copy and paste into your premium chat window (like Claude Opus 4.8 or Gemini 1.5 Pro). It instructs the AI to take any high-level user specification and immediately generate a complete, production-ready blueprint across all engineering layers—including the **React UI components**, **FastAPI endpoints**, **local SQLite database schemas**, and the **data ingestion pipeline**—without any missing code gaps.

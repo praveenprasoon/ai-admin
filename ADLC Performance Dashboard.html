@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>ADLC Performance Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --site-primary: #2459D3;
+      --site-on-primary: #FFFFFF;
+      --site-secondary: #132846;
+      --site-on-secondary: #FFFFFF;
+      --site-background: #F3F6FB;
+      --site-on-background: #18253B;
+      --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --site-heading-scale: 1;
+      --site-spacing-scale: 1;
+      --site-radius-scale: 1;
+      --site-decoration-opacity: 1;
+      --surface: light-dark(#FFFFFF, #172235);
+      --surface-2: light-dark(#F8FAFE, #1D2B40);
+      --text: light-dark(#18253B, #EAF0FA);
+      --muted: light-dark(#63718A, #A7B5C9);
+      --border: light-dark(#DDE5F0, #33445E);
+      --grid: light-dark(#E7EDF6, #2A3A52);
+      --good: #16866A;
+      --good-bg: light-dark(#E6F6F0, #153C36);
+      --warn: #A86312;
+      --warn-bg: light-dark(#FFF2DF, #49351D);
+      --bad: #C34A53;
+      --bad-bg: light-dark(#FCEBED, #48252E);
+      --blue-tint: light-dark(#E8EFFF, #20345F);
+      --shadow: 0 10px 28px rgba(30, 50, 82, 0.07);
+      --radius: calc(16px * var(--site-radius-scale));
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: var(--site-font-body); color: var(--text); background: light-dark(#F3F6FB, #0E1725); }
+    body { line-height: 1.45; }
+    button, select, input { font: inherit; }
+    button, select, input { color: var(--text); }
+    button { cursor: pointer; }
+    #app { min-height: 100vh; width: 100%; border-radius: 0; background-color: light-dark(var(--site-background), color-mix(in srgb, var(--site-background) 18%, #101827)); color: var(--site-on-background); }
+    .shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { padding: calc(24px * var(--site-spacing-scale)) 16px; background: var(--site-secondary); color: var(--site-on-secondary); display: flex; flex-direction: column; gap: 28px; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px; }
+    .brand-mark { width: 38px; height: 38px; border-radius: 12px; background: var(--site-primary); display: grid; place-items: center; color: white; font-weight: 850; letter-spacing: -1px; box-shadow: 0 6px 16px rgba(0,0,0,.15); }
+    .brand-name { font-size: 14px; font-weight: 750; letter-spacing: .01em; }
+    .brand-sub { font-size: 11px; opacity: .66; margin-top: 2px; }
+    .nav-label { padding: 0 12px; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: .14em; opacity: .52; margin-bottom: 6px; }
+    .nav { display: grid; gap: 5px; }
+    .nav-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: rgba(255,255,255,.74); text-align: left; font-size: 13px; font-weight: 600; transition: background .15s, color .15s; }
+    .nav-btn:hover { background: rgba(255,255,255,.08); color: white; }
+    .nav-btn.active { color: white; background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.10); }
+    .nav-ico { width: 20px; display: inline-grid; place-items: center; font-size: 16px; }
+    .side-spacer { flex: 1; }
+    .org-card { padding: 14px; border-radius: 13px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07); }
+    .org-top { display: flex; align-items: center; justify-content: space-between; font-size: 11px; opacity: .72; }
+    .org-number { font-size: 25px; font-weight: 800; letter-spacing: -.04em; margin: 7px 0 3px; }
+    .org-caption { font-size: 11px; opacity: .68; }
+    .org-bar { height: 5px; background: rgba(255,255,255,.15); border-radius: 10px; overflow: hidden; margin-top: 13px; }
+    .org-bar > span { display: block; height: 100%; width: 31.6%; background: #66D6B2; border-radius: 10px; }
+    .side-foot { padding: 0 10px; font-size: 10px; line-height: 1.6; color: rgba(255,255,255,.49); }
+    .main { min-width: 0; padding: calc(25px * var(--site-spacing-scale)) calc(30px * var(--site-spacing-scale)) 38px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+    .eyebrow { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin-bottom: 5px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-family: var(--site-font-heading); font-size: calc(28px * var(--site-heading-scale)); line-height: 1.15; letter-spacing: -.04em; margin-bottom: 7px; color: var(--text); }
+    h2 { font-family: var(--site-font-heading); font-size: calc(16px * var(--site-heading-scale)); letter-spacing: -.02em; margin-bottom: 3px; }
+    h3 { font-size: 13px; margin-bottom: 5px; }
+    .subtitle { font-size: 13px; color: var(--muted); max-width: 740px; }
+    .top-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+    .period-chip { border: 1px solid var(--border); background: var(--surface); padding: 9px 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; white-space: nowrap; }
+    .primary-btn { border: 1px solid var(--site-primary); background: var(--site-primary); color: var(--site-on-primary); padding: 10px 13px; font-size: 12px; font-weight: 750; border-radius: 10px; box-shadow: 0 4px 12px rgba(36,89,211,.17); }
+    .primary-btn:hover { filter: brightness(1.06); }
+    .secondary-btn { border: 1px solid var(--border); background: var(--surface); padding: 9px 12px; font-size: 12px; border-radius: 10px; font-weight: 650; }
+    .demo-banner { border: 1px solid light-dark(#CBD9FA, #344D7A); background: var(--blue-tint); color: var(--text); border-radius: 11px; display: flex; gap: 10px; align-items: flex-start; padding: 11px 14px; margin-bottom: 22px; font-size: 12px; }
+    .demo-banner strong { font-weight: 800; }
+    .demo-banner .info-icon { color: var(--site-primary); font-weight: 900; }
+    .page { display: none; }
+    .page.active { display: block; animation: appear .18s ease-out; }
+    @keyframes appear { from { opacity: .4; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+    .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
+    .section-head .small { color: var(--muted); font-size: 11px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 19px; }
+    .kpi { padding: 17px 17px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); min-width: 0; }
+    .kpi-top { display: flex; justify-content: space-between; align-items: center; gap: 7px; }
+    .kpi-label { color: var(--muted); font-size: 11px; line-height: 1.35; font-weight: 700; }
+    .kpi-glyph { width: 29px; height: 29px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); font-size: 15px; }
+    .kpi-value { font-size: clamp(24px, 2.3vw, 31px); font-weight: 820; letter-spacing: -.05em; margin: 13px 0 4px; line-height: 1; color: var(--text); }
+    .kpi-foot { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 10px; color: var(--muted); }
+    .delta { font-weight: 800; font-size: 10px; border-radius: 6px; padding: 3px 5px; }
+    .delta.good { background: var(--good-bg); color: var(--good); }
+    .delta.neutral { background: var(--warn-bg); color: var(--warn); }
+    .delta.bad { background: var(--bad-bg); color: var(--bad); }
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr); gap: 15px; margin-bottom: 15px; }
+    .grid-2.equal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .panel { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 18px; min-width: 0; box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .panel-note { font-size: 11px; color: var(--muted); }
+    .legend { display: flex; gap: 13px; flex-wrap: wrap; color: var(--muted); font-size: 10px; }
+    .legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; }
+    .chart-wrap { width: 100%; min-width: 0; }
+    svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+    .chart text { font-family: var(--site-font-body); fill: var(--muted); font-size: 10px; }
+    .stage-list { display: grid; gap: 15px; }
+    .stage-row { display: grid; grid-template-columns: 100px minmax(0, 1fr) 44px; align-items: center; gap: 10px; font-size: 11px; }
+    .stage-name { color: var(--muted); }
+    .stage-bars { display: grid; gap: 4px; }
+    .bar-line { height: 7px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+    .bar-line span { display: block; height: 100%; border-radius: 6px; }
+    .stage-val { font-size: 10px; text-align: right; color: var(--muted); }
+    .insight-card { display: flex; gap: 12px; padding: 13px; background: var(--surface-2); border-radius: 12px; margin-top: 15px; }
+    .insight-bullet { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto; background: var(--good-bg); color: var(--good); font-weight: 900; }
+    .insight-card p { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.55; }
+    .insight-card strong { color: var(--text); }
+    .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 18px; }
+    .mini-stat { background: var(--surface-2); border-radius: 10px; padding: 12px; }
+    .mini-stat .num { font-weight: 800; font-size: 20px; letter-spacing: -.04em; }
+    .mini-stat .lbl { color: var(--muted); font-size: 10px; margin-top: 4px; }
+    .adoption-line { display: grid; grid-template-columns: 120px minmax(0,1fr) 45px; align-items: center; gap: 12px; font-size: 11px; margin: 13px 0; }
+    .adoption-line .bar-line { height: 8px; }
+    .pill { display: inline-flex; align-items: center; border-radius: 100px; padding: 4px 8px; font-size: 10px; font-weight: 750; white-space: nowrap; }
+    .pill.pilot { background: var(--blue-tint); color: var(--site-primary); }
+    .pill.control { background: var(--surface-2); color: var(--muted); }
+    .pill.good { background: var(--good-bg); color: var(--good); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin-bottom: 14px; }
+    .search { flex: 1 1 220px; position: relative; }
+    .search input { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 10px 12px 10px 36px; font-size: 12px; outline: none; }
+    .search input:focus, select:focus { border-color: var(--site-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-primary) 13%, transparent); }
+    .search span { position: absolute; left: 12px; top: 9px; color: var(--muted); }
+    select { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 9px 30px 9px 11px; font-size: 12px; outline: none; }
+    .table-wrap { width: 100%; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 11px; }
+    th { text-align: left; padding: 11px 10px; background: var(--surface-2); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: 9px; font-weight: 800; white-space: nowrap; }
+    td { padding: 12px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr:hover { background: color-mix(in srgb, var(--site-primary) 4%, transparent); }
+    tbody tr:last-child td { border-bottom: 0; }
+    .team-cell { display: flex; gap: 9px; align-items: center; }
+    .team-avatar { height: 30px; width: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--blue-tint); color: var(--site-primary); font-size: 10px; font-weight: 850; }
+    .team-name { font-weight: 750; color: var(--text); font-size: 11px; }
+    .team-focus { color: var(--muted); font-size: 10px; margin-top: 2px; }
+    .positive { color: var(--good); font-weight: 800; }
+    .negative { color: var(--bad); font-weight: 800; }
+    .muted { color: var(--muted); }
+    .team-table-foot { padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .workflow-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; }
+    .workflow-card { border: 1px solid var(--border); border-radius: 13px; background: var(--surface); padding: 16px; }
+    .workflow-number { color: var(--site-primary); font-size: 10px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+    .workflow-card h3 { margin: 10px 0 5px; font-size: 13px; }
+    .workflow-card p { font-size: 11px; color: var(--muted); margin-bottom: 12px; min-height: 48px; }
+    .workflow-foot { border-top: 1px solid var(--border); padding-top: 11px; display: flex; justify-content: space-between; gap: 8px; font-size: 10px; }
+    .gated { color: var(--warn); font-weight: 750; }
+    .metrics-layout { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(280px,.9fr); gap: 15px; }
+    .definition { padding: 13px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: minmax(140px,.7fr) minmax(0,1.3fr); gap: 14px; }
+    .definition:last-child { border-bottom: 0; }
+    .definition dt { font-size: 11px; font-weight: 800; }
+    .definition dd { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.55; }
+    .field-map { width: 100%; border-collapse: collapse; min-width: 0; }
+    .field-map th, .field-map td { white-space: normal; vertical-align: top; padding: 9px 7px; }
+    .field-map th { font-size: 9px; }
+    .field-map td { font-size: 10px; }
+    .callout { padding: 13px 14px; border-left: 3px solid var(--site-primary); border-radius: 0 9px 9px 0; background: var(--blue-tint); font-size: 11px; line-height: 1.6; margin-top: 13px; }
+    .callout strong { display: block; margin-bottom: 3px; }
+    .footer-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 10px; margin-top: 19px; }
+    .footer-note span { display: inline-flex; align-items: center; gap: 6px; }
+    .status-dot { height: 7px; width: 7px; border-radius: 100%; background: var(--warn); display: inline-block; }
+    .toast { position: fixed; bottom: 22px; right: 22px; background: var(--site-secondary); color: white; padding: 12px 16px; border-radius: 11px; font-size: 12px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .2s; z-index: 20; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 205px minmax(0,1fr); }
+      .main { padding: 22px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-2 { grid-template-columns: minmax(0,1fr); }
+    }
+    @media (max-width: 760px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { padding: 13px 14px; gap: 14px; }
+      .brand { padding: 0 3px; }
+      .nav-label, .org-card, .side-foot, .side-spacer { display: none; }
+      .nav { display: flex; overflow: auto; gap: 5px; padding-bottom: 1px; }
+      .nav-btn { width: auto; flex: 0 0 auto; padding: 9px 11px; font-size: 11px; }
+      .nav-ico { width: auto; }
+      .main { padding: 20px 14px 28px; }
+      .topbar { align-items: flex-start; flex-direction: column; margin-bottom: 18px; }
+      .top-actions { justify-content: flex-start; width: 100%; }
+      .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+      .kpi { padding: 13px; }
+      .kpi-value { font-size: 26px; }
+      .grid-2.equal, .metrics-layout { grid-template-columns: minmax(0,1fr); }
+      .workflow-grid { grid-template-columns: minmax(0,1fr); }
+      .workflow-card p { min-height: 0; }
+      .stage-row { grid-template-columns: 85px minmax(0,1fr) 38px; }
+      .panel { padding: 14px; }
+      .definition { grid-template-columns: 1fr; gap: 5px; }
+    }
+    @media (max-width: 410px) {
+      h1 { font-size: 24px; }
+      .kpi-value { font-size: 23px; }
+      .kpi-label { font-size: 10px; }
+      .mini-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">A↗</div>
+          <div><div class="brand-name">ADLC Performance</div><div class="brand-sub">Engineering effectiveness</div></div>
+        </div>
+        <div>
+          <div class="nav-label">Workspace</div>
+          <nav class="nav" aria-label="Main navigation">
+            <button class="nav-btn active" data-page="overview"><span class="nav-ico">◫</span> Executive overview</button>
+            <button class="nav-btn" data-page="teams"><span class="nav-ico">▦</span> Team scorecard</button>
+            <button class="nav-btn" data-page="workflow"><span class="nav-ico">↗</span> Agent workflows</button>
+            <button class="nav-btn" data-page="metrics"><span class="nav-ico">◎</span> Metrics &amp; Jira mapping</button>
+          </nav>
+        </div>
+        <div class="side-spacer"></div>
+        <div class="org-card">
+          <div class="org-top"><span>ORG PILOT COVERAGE</span><span>↗</span></div>
+          <div class="org-number">6 <span style="font-size:13px;font-weight:600;opacity:.65">/ 19 teams</span></div>
+          <div class="org-caption">60 of 180 people in pilot teams</div>
+          <div class="org-bar"><span></span></div>
+        </div>
+        <div class="side-foot">Measurement framework v0.1<br>Jira Agile baseline → human-in-the-loop ADLC</div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <div class="eyebrow">Engineering transformation / Scorecard</div>
+            <h1 id="page-title">Executive overview</h1>
+            <div class="subtitle" id="page-subtitle">Compare today's Agile SDLC delivery with the ADLC pilot, while keeping quality and human accountability visible.</div>
+          </div>
+          <div class="top-actions">
+            <div class="period-chip"><span>◷</span><span>Illustrative 90-day pilot</span></div>
+            <button class="primary-btn" id="export-btn">↧ Export team CSV</button>
+          </div>
+        </header>
+        <div class="demo-banner"><span class="info-icon">ⓘ</span><div><strong>Demo data — not connected to Jira.</strong> The values below illustrate how the measurement system works. Replace them with Jira issue history, sprint/capacity data, human-effort sampling, CI/CD outcomes and defect data before making decisions.</div></div>
+
+        <section class="page active" id="page-overview">
+          <div class="section-head"><div><h2>ADLC impact at a glance</h2><div class="small">6 pilot teams compared with their own pre-pilot baseline; controls used to estimate change beyond normal variation.</div></div><span class="pill pilot">PILOT SIGNAL</span></div>
+          <div class="kpis">
+            <article class="kpi"><div class="kpi-top"><div class="kpi-label">Throughput per FTE-week</div><div class="kpi-glyph">↗</div></div><div class="kpi-value" id="kpi-throughput">+25.4%</div><div class="kpi-foot"><span class="delta good" id="throughput-adjusted">+21.8% adjusted</span><span>accepted size-weighted units</span></div></article>
+            <article class="kpi"><div class="kpi-top"><div class="kpi-label">Avg. cycle time</div><div class="kpi-glyph">◷</div></div><div class="kpi-value" id="kpi-cycle">−30.9%</div><div class="kpi-foot"><span class="delta good">−29.1% adjusted</span><span>days from start to accepted</span></div></article>
+            <article class="kpi"><div class="kpi-top"><div class="kpi-label">Human effort per accepted unit</div><div class="kpi-glyph">⌁</div></div><div class="kpi-value" id="kpi-effort">−21.8%</div><div class="kpi-foot"><span class="delta good">−19.3% adjusted</span><span>all roles + review + rework</span></div></article>
+            <article class="kpi"><div class="kpi-top"><div class="kpi-label">Escaped defects / 100 accepted</div><div class="kpi-glyph">✓</div></div><div class="kpi-value" id="kpi-quality">−3.2%</div><div class="kpi-foot"><span class="delta good">Within guardrail</span><span>pilot: 4.15 → 4.02</span></div></article>
+          </div>
+
+          <div class="grid-2">
+            <article class="panel">
+              <div class="panel-head"><div><h2>Delivery throughput trend</h2><div class="panel-note">Accepted, size-weighted work units per FTE-week · illustrative weekly values</div></div><span class="pill good">+25% vs baseline</span></div>
+              <div class="legend" style="margin-bottom:10px"><span><i class="dot" style="background:#93A3BD"></i> SDLC reference</span><span><i class="dot" style="background:var(--site-primary)"></i> ADLC pilot</span></div>
+              <div class="chart-wrap"><svg class="chart" id="throughput-chart" viewBox="0 0 620 245" role="img" aria-label="Throughput trend chart"></svg></div>
+              <div class="insight-card"><div class="insight-bullet">↗</div><p><strong>How to read this:</strong> Compare the pilot's current rate to its own historical baseline, then adjust for the change in control teams. Story points remain useful within a team, but are not a universal unit across 19 teams.</p></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><h2>Cycle time by workflow stage</h2><div class="panel-note">Average elapsed days · illustrative breakdown</div></div></div>
+              <div class="legend" style="margin-bottom:18px"><span><i class="dot" style="background:#93A3BD"></i> SDLC</span><span><i class="dot" style="background:var(--site-primary)"></i> ADLC</span></div>
+              <div id="stage-bars" class="stage-list"></div>
+              <div class="mini-stats">
+                <div class="mini-stat"><div class="num">−44%</div><div class="lbl">Implementation time</div></div>
+                <div class="mini-stat"><div class="num">−22%</div><div class="lbl">Test + fix time</div></div>
+                <div class="mini-stat"><div class="num">−28%</div><div class="lbl">Queue / wait time</div></div>
+              </div>
+            </article>
+          </div>
+          <div class="grid-2 equal">
+            <article class="panel">
+              <div class="panel-head"><div><h2>Rollout coverage</h2><div class="panel-note">Current operating model across the 180-person organization</div></div></div>
+              <div class="adoption-line"><span>ADLC pilot</span><div class="bar-line"><span style="width:31.6%;background:var(--site-primary)"></span></div><strong>6 teams</strong></div>
+              <div class="adoption-line"><span>SDLC control</span><div class="bar-line"><span style="width:68.4%;background:#93A3BD"></span></div><strong>13 teams</strong></div>
+              <div class="adoption-line"><span>Scaled / validated</span><div class="bar-line"><span style="width:0%;background:var(--good)"></span></div><strong>0 teams</strong></div>
+              <div class="callout"><strong>Recommended decision gate</strong>Scale only when throughput or effort improves for multiple work types and quality, security, and operational metrics remain within agreed guardrails.</div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><h2>Measurement integrity</h2><div class="panel-note">What makes the comparison defensible</div></div><span class="pill warn">3 controls</span></div>
+              <div style="display:grid;gap:12px">
+                <div style="display:flex;gap:10px"><span class="pill good">01</span><div><h3>Same-team baseline</h3><div class="panel-note">Normalize against each team's own historical performance, not another team's velocity.</div></div></div>
+                <div style="display:flex;gap:10px"><span class="pill good">02</span><div><h3>Control-adjusted results</h3><div class="panel-note">Compare pre/post change in pilot teams with simultaneous change in control teams.</div></div></div>
+                <div style="display:flex;gap:10px"><span class="pill good">03</span><div><h3>Quality as a gate</h3><div class="panel-note">Do not report a speed gain as success if escaped defects, vulnerabilities, or incidents exceed thresholds.</div></div></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-teams">
+          <div class="section-head"><div><h2>Feature team scorecard</h2><div class="small">One row per feature team. Select a cohort, inspect the deltas, and export the underlying demo data.</div></div><span class="pill control">19 TEAMS · 180 PEOPLE</span></div>
+          <div class="toolbar">
+            <div class="search"><span>⌕</span><input id="team-search" type="search" placeholder="Search team or work focus…" aria-label="Search teams"></div>
+            <select id="cohort-filter" aria-label="Filter cohort"><option value="all">All teams</option><option value="pilot">ADLC pilot</option><option value="control">SDLC control</option></select>
+            <select id="focus-filter" aria-label="Filter work focus"><option value="all">All work focuses</option><option value="Feature delivery">Feature delivery</option><option value="Defect remediation">Defect remediation</option><option value="Platform / tech debt">Platform / tech debt</option><option value="Security / compliance">Security / compliance</option></select>
+            <button class="secondary-btn" id="reset-filters">Reset filters</button>
+          </div>
+          <article class="panel" style="padding:0;overflow:hidden">
+            <div class="table-wrap">
+              <table id="team-table">
+                <thead><tr><th>Feature team</th><th>People</th><th>Operating model</th><th>Throughput Δ</th><th>Cycle time Δ</th><th>Human effort Δ</th><th>Defects / 100</th><th>Agent adoption</th></tr></thead>
+                <tbody id="team-tbody"></tbody>
+              </table>
+            </div>
+            <div class="team-table-foot" style="padding:13px 16px"><span id="row-count">Showing 19 teams</span><span>Rates are within-team comparisons; story-point velocity is not compared across teams.</span></div>
+          </article>
+          <div class="grid-2 equal" style="margin-top:15px">
+            <article class="panel"><h2>Reading team-level gains</h2><p class="panel-note" style="margin-top:8px;line-height:1.65">Use team deltas to find where agentic workflows help or hurt. Do not use the table as a league table: teams have different complexity, dependencies, risk, and service constraints. Investigate outliers with their engineering leads.</p></article>
+            <article class="panel"><h2>Sample pilot operating rule</h2><p class="panel-note" style="margin-top:8px;line-height:1.65">Keep a team in the pilot when usage telemetry and human effort are measurable, the workflow preserves human approval gates, and the quality trend remains safe. If the team is blocked by environment or data access, mark the result inconclusive rather than negative.</p></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-workflow">
+          <div class="section-head"><div><h2>Agent workflow performance</h2><div class="small">Measure the work agents complete and the human work needed to supervise, verify, correct, and release it.</div></div><span class="pill pilot">HUMAN-IN-THE-LOOP</span></div>
+          <div class="workflow-grid">
+            <article class="workflow-card"><div class="workflow-number">01 / Understand</div><h3>Requirements &amp; story refinement</h3><p>Draft acceptance criteria, identify ambiguity, map dependencies, and propose test scenarios from Jira context.</p><div class="workflow-foot"><span>Primary KPI</span><strong>Ready-to-start lead time</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">PO / BA approval</strong></div></article>
+            <article class="workflow-card"><div class="workflow-number">02 / Design</div><h3>Plan &amp; solution design</h3><p>Generate implementation plans, identify affected services, suggest design alternatives, and surface architectural risks.</p><div class="workflow-foot"><span>Primary KPI</span><strong>Plan acceptance rate</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">Architect approval</strong></div></article>
+            <article class="workflow-card"><div class="workflow-number">03 / Build</div><h3>Implementation</h3><p>Generate code, migrations, configuration and documentation against approved scope and repository conventions.</p><div class="workflow-foot"><span>Primary KPI</span><strong>Human hours per accepted unit</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">Engineer review</strong></div></article>
+            <article class="workflow-card"><div class="workflow-number">04 / Verify</div><h3>Tests, security &amp; review</h3><p>Create and run tests, resolve failures, run static analysis, and prepare evidence for quality gates.</p><div class="workflow-foot"><span>Primary KPI</span><strong>First-pass acceptance</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">QA / security policy</strong></div></article>
+            <article class="workflow-card"><div class="workflow-number">05 / Release</div><h3>Release &amp; operations</h3><p>Prepare change notes, release evidence, rollback plans, and production verification steps.</p><div class="workflow-foot"><span>Primary KPI</span><strong>Change failure rate</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">Authorized release</strong></div></article>
+            <article class="workflow-card"><div class="workflow-number">06 / Learn</div><h3>Observe &amp; improve</h3><p>Link incidents and escaped defects to delivered changes; update prompts, policies, and workflow templates.</p><div class="workflow-foot"><span>Primary KPI</span><strong>Rework and escaped defects</strong></div><div class="workflow-foot"><span>Human gate</span><strong class="gated">Team retrospective</strong></div></article>
+          </div>
+          <div class="grid-2 equal" style="margin-top:15px">
+            <article class="panel"><div class="panel-head"><div><h2>Agent success ≠ productivity</h2><div class="panel-note">Avoid vanity metrics</div></div></div><div style="display:grid;gap:12px"><div><span class="pill warn">Do not use alone</span><p class="panel-note" style="margin:7px 0 0">Lines of code generated, prompts per developer, agent sessions, percentage of code written by AI, or raw story points.</p></div><div><span class="pill good">Use with outcomes</span><p class="panel-note" style="margin:7px 0 0">Accepted work, end-to-end lead/cycle time, human effort including rework, quality, deployment stability, and cost per accepted outcome.</p></div></div></article>
+            <article class="panel"><div class="panel-head"><div><h2>Agent telemetry worth capturing</h2><div class="panel-note">Join to Jira issue / PR / release IDs</div></div></div><div class="mini-stats"><div class="mini-stat"><div class="num">%</div><div class="lbl">Workflow completed without restart</div></div><div class="mini-stat"><div class="num">#</div><div class="lbl">Human interventions per workflow</div></div><div class="mini-stat"><div class="num">$</div><div class="lbl">Model + runtime cost per accepted unit</div></div></div><p class="panel-note" style="margin-top:12px">Track token or tool usage for cost attribution, but do not treat it as a proxy for engineer productivity.</p></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-metrics">
+          <div class="section-head"><div><h2>Metric definitions &amp; Jira data mapping</h2><div class="small">A practical contract for consistent measurements before comparing SDLC with ADLC.</div></div><span class="pill good">MEASUREMENT CONTRACT</span></div>
+          <div class="metrics-layout">
+            <article class="panel">
+              <div class="panel-head"><div><h2>Core metric definitions</h2><div class="panel-note">Keep the numerator, denominator, and quality criteria stable across baseline and pilot.</div></div></div>
+              <dl style="margin:0">
+                <div class="definition"><dt>Throughput per FTE-week</dt><dd>Accepted, size-weighted units completed ÷ available engineering FTE-weeks. Use within-team story-point throughput as a secondary measure, not a cross-team currency.</dd></div>
+                <div class="definition"><dt>Human effort per accepted unit</dt><dd>Total active human hours from product, analysis, engineering, QA, review, debugging, agent supervision, and rework ÷ accepted output units. Use a consistent sampling method if time tracking is incomplete.</dd></div>
+                <div class="definition"><dt>Cycle time</dt><dd>Elapsed time from agreed work-start event to acceptance. Keep blocked time in the end-to-end measure; separately report waiting time and active time.</dd></div>
+                <div class="definition"><dt>Escaped defect rate</dt><dd>Production defects attributable to delivered changes ÷ accepted changes × 100, using a fixed observation window and severity weighting where appropriate.</dd></div>
+                <div class="definition"><dt>Control-adjusted change</dt><dd>Compare pre/post change in pilot with pre/post change in control. For rates, a useful relative estimate is (pilot post ÷ pilot pre) ÷ (control post ÷ control pre) − 1. Treat it as an estimate, not proof of causation.</dd></div>
+              </dl>
+              <div class="callout"><strong>Story point rule</strong>Keep your current Jira estimates. Use each team's accepted story points per team capacity as a within-team trend, and pair it with cycle time, human effort, work mix, and quality. Never sum points across teams as if a point means the same thing everywhere.</div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><h2>Jira + delivery data</h2><div class="panel-note">Candidate fields / integrations</div></div></div>
+              <div class="table-wrap"><table class="field-map"><thead><tr><th>Source</th><th>Data required</th><th>Why</th></tr></thead><tbody>
+                <tr><td><strong>Jira issue</strong></td><td>Issue key, team, type, status history, created/resolved timestamps, estimate, labels, parent, sprint, resolution</td><td>Work identity, size, flow, acceptance and cohort</td></tr>
+                <tr><td><strong>Sprint / capacity</strong></td><td>Sprint dates, team capacity, FTE availability, holidays / leave (aggregate only)</td><td>Normalize output per capacity</td></tr>
+                <tr><td><strong>PR / code review</strong></td><td>Issue link, PR open/merge times, reviewer time, revisions, approvals</td><td>Review effort, rework and flow queues</td></tr>
+                <tr><td><strong>CI/CD</strong></td><td>Build/test results, deployment timestamps, rollback / failed release indicators</td><td>Quality and deployment stability</td></tr>
+                <tr><td><strong>Defects / incidents</strong></td><td>Severity, production-discovered date, release link, affected change</td><td>Escaped defects and downstream cost</td></tr>
+                <tr><td><strong>Agent workflow log</strong></td><td>Workflow ID, linked issue/PR, stage, start/end, retries, intervention reason, model/tool cost</td><td>Attribute workflow impact and cost</td></tr>
+                <tr><td><strong>Human effort sample</strong></td><td>Hours by role/stage, including prompts, review, fix-up, and supervision</td><td>Validate real capacity released</td></tr>
+              </tbody></table></div>
+              <div class="callout"><strong>Privacy and governance</strong>Use team/work-item aggregates for leadership reporting. Avoid individual developer rankings; collect only the minimum telemetry needed, with access and retention rules agreed with engineering and security leadership.</div>
+            </article>
+          </div>
+          <article class="panel" style="margin-top:15px"><div class="panel-head"><div><h2>Suggested rollout decision gates</h2><div class="panel-note">Set thresholds with leadership before viewing results.</div></div></div><div class="grid-2 equal" style="margin-bottom:0"><div><h3>Ready to expand</h3><p class="panel-note" style="line-height:1.65">Positive control-adjusted throughput or effort trend, repeatable across multiple teams/work types, stable or better quality, documented human approval gates, and known run cost.</p></div><div><h3>Hold / investigate</h3><p class="panel-note" style="line-height:1.65">More escaped defects or security issues, increased review/rework burden, results dominated by a single team, poor baseline comparability, or missing human-effort evidence.</p></div></div></article>
+        </section>
+
+        <div class="footer-note"><span><i class="status-dot"></i> Demo data · not a live Jira connection</span><span>Framework concept: within-team baseline + matched controls + quality guardrails</span></div>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script>
+    const teams = [
+      {id:'T01',name:'Core Banking API',people:10,cohort:'pilot',focus:'Feature delivery',base:8.0,current:10.2,cycleBase:8.9,cycleCurrent:6.1,effortBase:3.3,effortCurrent:2.6,defectBase:4.2,defectCurrent:4.0,adoption:82},
+      {id:'T02',name:'Customer Profile',people:10,cohort:'pilot',focus:'Feature delivery',base:8.4,current:10.5,cycleBase:8.1,cycleCurrent:5.5,effortBase:3.1,effortCurrent:2.4,defectBase:4.0,defectCurrent:3.9,adoption:88},
+      {id:'T03',name:'Payments',people:10,cohort:'pilot',focus:'Feature delivery',base:7.8,current:9.8,cycleBase:9.2,cycleCurrent:6.4,effortBase:3.5,effortCurrent:2.7,defectBase:4.5,defectCurrent:4.4,adoption:76},
+      {id:'T04',name:'Digital Channels',people:10,cohort:'pilot',focus:'Feature delivery',base:8.5,current:10.7,cycleBase:8.0,cycleCurrent:5.6,effortBase:3.0,effortCurrent:2.4,defectBase:3.8,defectCurrent:3.7,adoption:91},
+      {id:'T05',name:'Identity & Access',people:10,cohort:'pilot',focus:'Security / compliance',base:7.9,current:9.7,cycleBase:8.7,cycleCurrent:6.0,effortBase:3.4,effortCurrent:2.7,defectBase:4.1,defectCurrent:4.0,adoption:70},
+      {id:'T06',name:'Data Services',people:10,cohort:'pilot',focus:'Platform / tech debt',base:8.6,current:10.8,cycleBase:8.2,cycleCurrent:5.7,effortBase:3.0,effortCurrent:2.3,defectBase:4.3,defectCurrent:4.1,adoption:85},
+      {id:'T07',name:'Customer Onboarding',people:10,cohort:'control',focus:'Feature delivery',base:8.1,current:8.4,cycleBase:8.4,cycleCurrent:8.2,effortBase:3.2,effortCurrent:3.1,defectBase:4.1,defectCurrent:4.0,adoption:0},
+      {id:'T08',name:'Notifications',people:10,cohort:'control',focus:'Feature delivery',base:8.4,current:8.6,cycleBase:8.2,cycleCurrent:8.0,effortBase:3.0,effortCurrent:2.9,defectBase:3.9,defectCurrent:3.8,adoption:0},
+      {id:'T09',name:'Data Governance',people:10,cohort:'control',focus:'Security / compliance',base:7.7,current:7.9,cycleBase:8.9,cycleCurrent:8.7,effortBase:3.4,effortCurrent:3.3,defectBase:4.2,defectCurrent:4.1,adoption:0},
+      {id:'T10',name:'Reporting & Insights',people:9,cohort:'control',focus:'Feature delivery',base:8.5,current:8.8,cycleBase:8.0,cycleCurrent:7.8,effortBase:3.0,effortCurrent:2.9,defectBase:3.8,defectCurrent:3.7,adoption:0},
+      {id:'T11',name:'Developer Platform',people:9,cohort:'control',focus:'Platform / tech debt',base:8.0,current:8.2,cycleBase:8.5,cycleCurrent:8.3,effortBase:3.2,effortCurrent:3.1,defectBase:4.0,defectCurrent:3.9,adoption:0},
+      {id:'T12',name:'Mobile Experience',people:9,cohort:'control',focus:'Feature delivery',base:8.7,current:9.0,cycleBase:7.9,cycleCurrent:7.7,effortBase:2.9,effortCurrent:2.8,defectBase:3.7,defectCurrent:3.6,adoption:0},
+      {id:'T13',name:'Enterprise Integration',people:9,cohort:'control',focus:'Feature delivery',base:7.8,current:8.1,cycleBase:8.8,cycleCurrent:8.5,effortBase:3.4,effortCurrent:3.3,defectBase:4.4,defectCurrent:4.3,adoption:0},
+      {id:'T14',name:'Reliability Engineering',people:9,cohort:'control',focus:'Platform / tech debt',base:7.6,current:7.8,cycleBase:9.0,cycleCurrent:8.8,effortBase:3.5,effortCurrent:3.4,defectBase:4.2,defectCurrent:4.1,adoption:0},
+      {id:'T15',name:'Risk & Controls',people:9,cohort:'control',focus:'Security / compliance',base:7.9,current:8.2,cycleBase:8.7,cycleCurrent:8.4,effortBase:3.3,effortCurrent:3.2,defectBase:4.1,defectCurrent:4.0,adoption:0},
+      {id:'T16',name:'Account Servicing',people:9,cohort:'control',focus:'Defect remediation',base:8.2,current:8.4,cycleBase:8.4,cycleCurrent:8.2,effortBase:3.1,effortCurrent:3.0,defectBase:4.0,defectCurrent:3.9,adoption:0},
+      {id:'T17',name:'Legacy Modernization',people:9,cohort:'control',focus:'Platform / tech debt',base:7.5,current:7.7,cycleBase:9.1,cycleCurrent:8.9,effortBase:3.6,effortCurrent:3.5,defectBase:4.5,defectCurrent:4.4,adoption:0},
+      {id:'T18',name:'Service Requests',people:9,cohort:'control',focus:'Defect remediation',base:8.3,current:8.5,cycleBase:8.3,cycleCurrent:8.1,effortBase:3.1,effortCurrent:3.0,defectBase:3.9,defectCurrent:3.8,adoption:0},
+      {id:'T19',name:'Compliance Automation',people:9,cohort:'control',focus:'Security / compliance',base:7.8,current:8.0,cycleBase:8.9,cycleCurrent:8.7,effortBase:3.4,effortCurrent:3.3,defectBase:4.3,defectCurrent:4.2,adoption:0}
+    ];
+    const pages = {
+      overview:{title:'Executive overview',subtitle:"Compare today's Agile SDLC delivery with the ADLC pilot, while keeping quality and human accountability visible."},
+      teams:{title:'Team scorecard',subtitle:'Review within-team performance, work focus, adoption and quality signals across all 19 feature teams.'},
+      workflow:{title:'Agent workflow performance',subtitle:'See where agentic workflows create value—and where review, control, or rework remains necessary.'},
+      metrics:{title:'Metrics & Jira mapping',subtitle:'Use a shared measurement contract so your baseline and pilot results remain comparable and explainable.'}
+    };
+    const stageData = [
+      {name:'Refine & design',base:1.2,adlc:0.9},
+      {name:'Implementation',base:2.7,adlc:1.5},
+      {name:'Test & fix',base:1.8,adlc:1.4},
+      {name:'Review & approve',base:1.1,adlc:0.8},
+      {name:'Queue / wait',base:1.8,adlc:1.3}
+    ];
+    const fmt = (n,d=1)=>Number(n).toFixed(d);
+    const pct = n => `${n<0?'−':'+'}${Math.abs(n).toFixed(1)}%`;
+    const avg = (arr,key,weightKey='people') => arr.reduce((s,t)=>s+t[key]*t[weightKey],0)/arr.reduce((s,t)=>s+t[weightKey],0);
+    const changePct = (before,after) => (after/before-1)*100;
+    function makeLineChart(){
+      const svg=document.getElementById('throughput-chart');
+      const values=[8.0,8.2,8.1,8.3,8.2,8.2,8.3,8.2];
+      const adlc=[8.4,8.9,9.2,9.7,9.6,10.0,10.4,10.3];
+      const w=620,h=245,left=42,right=14,top=14,bottom=30,plotW=w-left-right,plotH=h-top-bottom,min=7,max=11;
+      let out='';
+      for(let tick=7;tick<=11;tick++){
+        const y=top+(max-tick)/(max-min)*plotH;
+        out+=`<line x1="${left}" y1="${y}" x2="${w-right}" y2="${y}" stroke="var(--grid)" stroke-dasharray="3 4"/><text x="${left-10}" y="${y+3}" text-anchor="end">${tick}</text>`;
+      }
+      const x=i=>left+i*plotW/7; const y=v=>top+(max-v)/(max-min)*plotH;
+      const path=arr=>arr.map((v,i)=>`${i?'L':'M'}${x(i)},${y(v)}`).join(' ');
+      out+=`<path d="${path(values)}" fill="none" stroke="#93A3BD" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      out+=`<path d="${path(adlc)}" fill="none" stroke="var(--site-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+      values.forEach((v,i)=>out+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="#93A3BD"/>`);
+      adlc.forEach((v,i)=>out+=`<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="var(--site-primary)"/>`);
+      ['W−7','W−6','W−5','W−4','W−3','W−2','W−1','Now'].forEach((label,i)=>out+=`<text x="${x(i)}" y="${h-8}" text-anchor="middle">${label}</text>`);
+      out+=`<text x="${left}" y="${top-3}" font-weight="700">Accepted units / FTE-week</text>`;
+      svg.innerHTML=out;
+    }
+    function renderStages(){
+      const max=Math.max(...stageData.map(s=>s.base));
+      document.getElementById('stage-bars').innerHTML=stageData.map(s=>`<div class="stage-row"><div class="stage-name">${s.name}</div><div class="stage-bars"><div class="bar-line"><span style="width:${s.base/max*100}%;background:#93A3BD"></span></div><div class="bar-line"><span style="width:${s.adlc/max*100}%;background:var(--site-primary)"></span></div></div><div class="stage-val">${fmt(s.base)} → ${fmt(s.adlc)}d</div></div>`).join('');
+    }
+    function renderTeamTable(){
+      const q=document.getElementById('team-search').value.trim().toLowerCase();
+      const cohort=document.getElementById('cohort-filter').value;
+      const focus=document.getElementById('focus-filter').value;
+      const subset=teams.filter(t=>(cohort==='all'||t.cohort===cohort)&&(focus==='all'||t.focus===focus)&&(`${t.id} ${t.name} ${t.focus}`.toLowerCase().includes(q)));
+      const tbody=document.getElementById('team-tbody');
+      tbody.innerHTML=subset.map(t=>{
+        const gain=changePct(t.base,t.current), cycle=changePct(t.cycleBase,t.cycleCurrent), effort=changePct(t.effortBase,t.effortCurrent);
+        const mode=t.cohort==='pilot'?'<span class="pill pilot">ADLC pilot</span>':'<span class="pill control">SDLC control</span>';
+        const gClass=gain>1?'positive':gain< -1?'negative':'muted';
+        const cycleClass=cycle< -1?'positive':cycle>1?'negative':'muted';
+        const effortClass=effort< -1?'positive':effort>1?'negative':'muted';
+        return `<tr><td><div class="team-cell"><div class="team-avatar">${t.id}</div><div><div class="team-name">${t.name}</div><div class="team-focus">${t.focus}</div></div></div></td><td>${t.people}</td><td>${mode}</td><td class="${gClass}">${t.cohort==='pilot'?pct(gain):pct(gain)} </td><td class="${cycleClass}">${pct(cycle)}</td><td class="${effortClass}">${pct(effort)}</td><td>${fmt(t.defectBase,1)} → ${fmt(t.defectCurrent,1)}</td><td>${t.cohort==='pilot'?`<span class="pill ${t.adoption>=80?'good':'warn'}">${t.adoption}% active</span>`:'<span class="muted">Not started</span>'}</td></tr>`;
+      }).join('');
+      document.getElementById('row-count').textContent=`Showing ${subset.length} of ${teams.length} teams · ${subset.reduce((s,t)=>s+t.people,0)} people`;
+    }
+    function showPage(page){
+      Object.keys(pages).forEach(key=>{
+        document.getElementById(`page-${key}`).classList.toggle('active',key===page);
+        const btn=document.querySelector(`.nav-btn[data-page="${key}"]`);
+        btn.classList.toggle('active',key===page);
+      });
+      document.getElementById('page-title').textContent=pages[page].title;
+      document.getElementById('page-subtitle').textContent=pages[page].subtitle;
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function toast(msg){
+      const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+      clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+    }
+    function exportCSV(){
+      const headers=['Team ID','Team Name','People','Cohort','Primary Work Focus','Baseline Throughput Units per FTE-week','Current Throughput Units per FTE-week','Throughput Change %','Baseline Cycle Days','Current Cycle Days','Cycle Change %','Baseline Human Hours per Unit','Current Human Hours per Unit','Human Effort Change %','Baseline Escaped Defects per 100','Current Escaped Defects per 100','Agent Adoption %'];
+      const rows=teams.map(t=>[t.id,t.name,t.people,t.cohort,t.focus,t.base,t.current,changePct(t.base,t.current).toFixed(2),t.cycleBase,t.cycleCurrent,changePct(t.cycleBase,t.cycleCurrent).toFixed(2),t.effortBase,t.effortCurrent,changePct(t.effortBase,t.effortCurrent).toFixed(2),t.defectBase,t.defectCurrent,t.adoption]);
+      const csv=[headers,...rows].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\r\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='adlc-team-scorecard-demo.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); toast('Team scorecard CSV exported. Demo values are included.');
+    }
+    document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
+    ['team-search','cohort-filter','focus-filter'].forEach(id=>document.getElementById(id).addEventListener(id==='team-search'?'input':'change',renderTeamTable));
+    document.getElementById('reset-filters').addEventListener('click',()=>{document.getElementById('team-search').value='';document.getElementById('cohort-filter').value='all';document.getElementById('focus-filter').value='all';renderTeamTable();});
+    document.getElementById('export-btn').addEventListener('click',exportCSV);
+    makeLineChart(); renderStages(); renderTeamTable();
+  </script>
+</body>
+</html>

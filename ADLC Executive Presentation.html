@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>From Agile SDLC to Human-Governed ADLC</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --site-primary: #2D63E2;
+  --site-on-primary: #FFFFFF;
+  --site-secondary: #10233E;
+  --site-on-secondary: #FFFFFF;
+  --site-background: #F2F5FA;
+  --site-on-background: #17263B;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  --surface: light-dark(#FFFFFF, #17283F);
+  --surface-2: light-dark(#F7F9FD, #1E314B);
+  --text: light-dark(#17263B, #ECF2FC);
+  --muted: light-dark(#5E6D83, #A8B7CB);
+  --border: light-dark(#DAE2EF, #354A66);
+  --blue-soft: light-dark(#E8EFFF, #243A61);
+  --teal: #12A58C;
+  --teal-soft: light-dark(#E2F7F2, #183E3C);
+  --amber: #D18B2D;
+  --amber-soft: light-dark(#FFF3E1, #493820);
+  --red: #C94E5A;
+  --red-soft: light-dark(#FCEBED, #482832);
+  --shadow: 0 18px 44px rgba(24, 42, 70, .09);
+  --radius: calc(18px * var(--site-radius-scale));
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; font-family: var(--site-font-body); background: light-dark(#E9EEF6, #091421); color: var(--text); }
+body { line-height: 1.45; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background-color: var(--site-background); color: var(--site-on-background); position: relative; overflow: hidden; }
+.topbar { height: 72px; padding: 0 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; background: var(--site-secondary); color:var(--site-on-secondary); border-bottom:1px solid rgba(255,255,255,.12); }
+.brand { display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-mark { width:38px;height:38px;border-radius:12px;background:var(--site-primary);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 5px 18px rgba(0,0,0,.18); }
+.brand-title { font-size:14px; font-weight:800; letter-spacing:.01em; }
+.brand-sub { font-size:10px; opacity:.66; margin-top:2px; letter-spacing:.06em; text-transform:uppercase; }
+.top-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+.pill-label { color:#C3D4F2; font-size:10px; letter-spacing:.12em; font-weight:800; text-transform:uppercase; margin-right:8px; }
+.action { border:1px solid rgba(255,255,255,.20); color:white; background:rgba(255,255,255,.07); padding:9px 12px; border-radius:10px; font-size:11px; font-weight:700; }
+.action:hover { background:rgba(255,255,255,.14); }
+.action.primary { background:var(--site-primary);border-color:var(--site-primary); }
+#deck { width:min(100%, 1540px); margin:0 auto; padding:26px 30px 18px; }
+.slide-shell { min-height:calc(100vh - 150px); display:flex; flex-direction:column; }
+.slide { display:none; flex:1; min-height:570px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); overflow:hidden; position:relative; }
+.slide.active { display:flex; flex-direction:column; animation:enter .20s ease-out; }
+@keyframes enter { from { opacity:.5; transform:translateY(5px);} to {opacity:1;transform:translateY(0);} }
+.slide-inner { flex:1; padding:clamp(24px,3.6vw,54px); position:relative; z-index:1; }
+.slide-inner.wide { padding-left:clamp(24px,3vw,42px); padding-right:clamp(24px,3vw,42px); }
+.slide-kicker { display:flex; align-items:center; gap:9px; color:var(--site-primary); font-size:10px; letter-spacing:.15em; font-weight:850; text-transform:uppercase; margin-bottom:15px; }
+.kicker-line { width:24px; height:2px; background:var(--site-primary); border-radius:4px; }
+h1,h2,h3,h4,p { margin-top:0; }
+h1 { font-family:var(--site-font-heading); font-size:clamp(36px,5.8vw,74px); line-height:1.02; letter-spacing:-.065em; max-width:950px; margin-bottom:22px; }
+h2 { font-family:var(--site-font-heading); font-size:calc(clamp(27px,3.15vw,43px) * var(--site-heading-scale)); line-height:1.07; letter-spacing:-.05em; max-width:1000px; margin-bottom:14px; }
+h3 { font-size:clamp(14px,1.35vw,18px); line-height:1.2; letter-spacing:-.025em; margin-bottom:8px; }
+h4 { font-size:12px; margin-bottom:6px; }
+p { line-height:1.55; }
+.lead { max-width:900px; font-size:clamp(15px,1.55vw,20px); line-height:1.55; color:var(--muted); }
+.body-copy { color:var(--muted); font-size:13px; line-height:1.6; }
+.small { font-size:10px; color:var(--muted); line-height:1.5; }
+.muted { color:var(--muted); }
+.strong { font-weight:850; color:var(--text); }
+.hero { background:linear-gradient(118deg,#0E2039 0%,#173B70 56%,#2D63E2 100%); color:white; border:none; }
+.hero::before { content:""; position:absolute; right:-100px; top:-220px; width:600px; height:600px; border-radius:50%; border:1px solid rgba(255,255,255,.16); box-shadow:0 0 0 40px rgba(255,255,255,.035),0 0 0 100px rgba(255,255,255,.025),0 0 0 165px rgba(255,255,255,.018); opacity:var(--site-decoration-opacity); pointer-events:none; }
+.hero .slide-inner { display:flex; flex-direction:column; justify-content:space-between; min-height:580px; }
+.hero .slide-kicker { color:#B9D0FF; }
+.hero h1 { color:#fff; }
+.hero .lead { color:rgba(255,255,255,.80); max-width:780px; }
+.hero-footer { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-top:38px; }
+.hero-stats { display:flex; gap:10px; flex-wrap:wrap; }
+.hero-stat { min-width:130px; padding:12px 15px; border-radius:13px; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.09); }
+.hero-stat b { display:block; font-size:23px; letter-spacing:-.04em; }
+.hero-stat span { display:block;font-size:10px;color:rgba(255,255,255,.7);margin-top:3px; }
+.hero-note { font-size:11px;color:rgba(255,255,255,.62);max-width:260px; }
+.grid { display:grid; gap:13px; }
+.cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.cols-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.cols-4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.card { padding:17px; border:1px solid var(--border); border-radius:14px; background:var(--surface); min-width:0; }
+.card.soft { background:var(--surface-2); }
+.card.blue { background:var(--blue-soft); border-color:color-mix(in srgb,var(--site-primary) 28%,var(--border)); }
+.card.teal { background:var(--teal-soft); border-color:color-mix(in srgb,var(--teal) 28%,var(--border)); }
+.card.amber { background:var(--amber-soft); border-color:color-mix(in srgb,var(--amber) 30%,var(--border)); }
+.card.red { background:var(--red-soft); border-color:color-mix(in srgb,var(--red) 26%,var(--border)); }
+.card p:last-child { margin-bottom:0; }
+.card-label { font-size:9px; font-weight:850; letter-spacing:.12em; text-transform:uppercase; color:var(--site-primary); margin-bottom:9px; }
+.card p { color:var(--muted); font-size:11px; line-height:1.55; }
+.icon { width:34px;height:34px;border-radius:10px;background:var(--blue-soft);color:var(--site-primary);display:grid;place-items:center;margin-bottom:13px; }
+.icon svg { width:19px;height:19px; }
+.icon.teal { background:var(--teal-soft); color:var(--teal); }
+.icon.amber { background:var(--amber-soft); color:var(--amber); }
+.icon.red { background:var(--red-soft); color:var(--red); }
+.callout { border-left:3px solid var(--site-primary); background:var(--blue-soft); border-radius:0 10px 10px 0; padding:13px 15px; font-size:11px; line-height:1.6; color:var(--text); margin-top:15px; }
+.callout strong { display:block; margin-bottom:4px; }
+.callout.warning { border-color:var(--amber); background:var(--amber-soft); }
+.callout.good { border-color:var(--teal); background:var(--teal-soft); }
+.tag { display:inline-flex; align-items:center; gap:5px; font-size:9px; font-weight:850; letter-spacing:.05em; padding:5px 8px; border-radius:99px; background:var(--surface-2); color:var(--muted); border:1px solid var(--border); }
+.tag.blue { background:var(--blue-soft); color:var(--site-primary);border-color:transparent; }
+.tag.teal { background:var(--teal-soft); color:var(--teal);border-color:transparent; }
+.tag.amber { background:var(--amber-soft); color:var(--amber);border-color:transparent; }
+.tag.red { background:var(--red-soft); color:var(--red);border-color:transparent; }
+.inline-tags { display:flex;gap:7px;flex-wrap:wrap; }
+.flow { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; align-items:stretch; }
+.flow.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.flow.four { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.flow-item { border:1px solid var(--border); background:var(--surface-2); border-radius:12px; padding:13px; min-width:0; position:relative; }
+.flow-item:not(:last-child)::after { content:"›"; position:absolute; right:-8px; top:43%; z-index:2; font-size:21px; font-weight:900; color:var(--site-primary); background:var(--surface); height:25px; line-height:23px; padding:0 2px; }
+.flow-no { color:var(--site-primary);font-size:9px;font-weight:900;letter-spacing:.1em;margin-bottom:8px; }
+.flow-item h3 { font-size:12px; }
+.flow-item p { font-size:10px; color:var(--muted); margin:0; }
+.bullet-list { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:8px; }
+.bullet-list li { position:relative; padding-left:17px; font-size:11px; color:var(--muted); line-height:1.5; }
+.bullet-list li::before { content:""; position:absolute; left:0; top:.56em; width:6px;height:6px;border-radius:50%;background:var(--site-primary); }
+.metric { padding:16px; border:1px solid var(--border); border-radius:13px; background:var(--surface-2); }
+.metric .value { font-size:clamp(23px,2.6vw,35px);font-weight:900;letter-spacing:-.055em;line-height:1.1;margin:7px 0 5px; }
+.metric .label { font-size:10px;color:var(--muted);font-weight:700; }
+.metric .hint { font-size:9px;color:var(--muted);line-height:1.5; }
+.visual-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
+.visual-card { border:1px solid var(--border);border-radius:13px;background:var(--surface-2);padding:13px;min-width:0; }
+.visual-card h3 { font-size:12px;margin:8px 0 5px; }
+.visual-card p { font-size:10px;color:var(--muted);line-height:1.55;margin:0; }
+.visual-icon { width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:var(--blue-soft);color:var(--site-primary); }
+.visual-icon svg { width:23px;height:23px; }
+.visual-icon.teal { background:var(--teal-soft);color:var(--teal); }
+.visual-icon.amber { background:var(--amber-soft);color:var(--amber); }
+.visual-icon.red { background:var(--red-soft);color:var(--red); }
+.visual-legend { display:flex;gap:8px;flex-wrap:wrap;margin-top:9px; }
+.visual-legend .tag { font-size:9px; }
+.architecture-visual { border:1px solid var(--border);background:var(--surface-2);border-radius:14px;padding:13px;overflow:hidden; }
+.architecture-visual svg { width:100%;height:auto;display:block; }
+.architecture-visual text { font-family:var(--site-font-body);fill:var(--text); }
+.architecture-visual .svg-muted { fill:var(--muted); }
+.faq-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.faq-item { border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:13px; }
+.faq-item h3 { font-size:12px;margin-bottom:6px; }
+.faq-item p { font-size:10px;color:var(--muted);line-height:1.6;margin:0; }
+.persona-rail { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:13px 0; }
+.persona-node { border:1px solid var(--border);background:var(--surface);border-radius:11px;padding:11px;min-width:0; }
+.persona-node .role { font-size:9px;font-weight:900;color:var(--site-primary);letter-spacing:.07em;text-transform:uppercase; }
+.persona-node strong { display:block;font-size:11px;margin:6px 0 4px; }
+.persona-node p { font-size:9px;line-height:1.5;color:var(--muted);margin:0; }
+.knowledge-flow { display:grid;grid-template-columns:1.05fr 28px 1.1fr 28px 1.1fr 28px 1fr;align-items:stretch;gap:6px;margin:14px 0; }
+.knowledge-col { display:grid;gap:7px;align-content:stretch; }
+.knowledge-node { border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:10px;font-size:9px;color:var(--muted);line-height:1.45; }
+.knowledge-node strong { display:block;color:var(--text);font-size:10px;margin-bottom:4px; }
+.knowledge-node.focus { background:var(--blue-soft);border-color:color-mix(in srgb,var(--site-primary) 32%,var(--border)); }
+.knowledge-node.safe { background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 30%,var(--border)); }
+.knowledge-arrow { display:grid;place-items:center;color:var(--site-primary);font-weight:900;font-size:22px; }
+.dashboard-metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px; }
+.dashboard-metric { border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:10px; }
+.dashboard-metric span { display:block;font-size:9px;color:var(--muted);line-height:1.4; }
+.dashboard-metric strong { display:block;font-size:18px;letter-spacing:-.04em;margin:5px 0 3px; }
+.dashboard-metric small { font-size:8px;color:var(--muted); }
+.split { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr); gap:14px; align-items:stretch; }
+.system-map { display:grid; grid-template-columns:1fr 34px 1.2fr 34px 1fr; align-items:stretch; gap:7px; }
+.map-column { display:grid; gap:8px; align-content:stretch; }
+.map-box { border:1px solid var(--border); border-radius:11px; background:var(--surface-2); padding:11px; font-size:10px; color:var(--muted); line-height:1.45; }
+.map-box strong { display:block;color:var(--text);font-size:11px;margin-bottom:4px; }
+.map-box.focus { background:var(--blue-soft);border-color:color-mix(in srgb,var(--site-primary) 35%,var(--border)); }
+.map-box.safe { background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 30%,var(--border)); }
+.map-arrow { display:grid;place-items:center;color:var(--site-primary);font-size:25px;font-weight:900; }
+.domain-banner { background:linear-gradient(100deg,var(--site-secondary),#1D4B91); color:#fff; padding:17px 20px; border-radius:14px; display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:15px; }
+.domain-banner h3 { font-size:19px; margin:0 0 4px; }
+.domain-banner p { margin:0;color:rgba(255,255,255,.72);font-size:11px; }
+.domain-banner .domain-glyph { width:48px;height:48px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);border-radius:15px;display:grid;place-items:center;flex-shrink:0; }
+.domain-glyph svg { width:25px;height:25px; }
+.criterion { padding:11px 12px; border:1px solid var(--border); background:var(--surface); border-radius:10px; }
+.criterion b { display:block;font-size:10px;color:var(--site-primary);margin-bottom:4px; }
+.criterion p { font-size:10px;margin:0;color:var(--muted);line-height:1.5; }
+.gate-list { display:grid;gap:8px; }
+.gate-row { display:grid;grid-template-columns:105px minmax(0,1fr) 140px;gap:12px;align-items:start;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface); }
+.gate-row .gate { font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--site-primary);text-transform:uppercase; }
+.gate-row .what { font-size:11px;font-weight:800; }
+.gate-row .proof { font-size:10px;color:var(--muted);line-height:1.5; }
+.table { width:100%;border-collapse:collapse;min-width:600px;font-size:10px; }
+.table th { text-align:left;text-transform:uppercase;letter-spacing:.09em;font-size:8px;color:var(--muted);background:var(--surface-2);padding:10px 11px; }
+.table td { padding:10px 11px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5; }
+.table tbody tr:last-child td { border-bottom:0; }
+.table td:first-child { font-weight:800;color:var(--text); }
+.table-wrap { overflow:auto;border:1px solid var(--border);border-radius:12px; }
+.scale { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch; }
+.level { border:1px solid var(--border);border-radius:13px;padding:13px;background:var(--surface-2); }
+.level .n { font-size:9px;font-weight:900;letter-spacing:.12em;color:var(--site-primary); }
+.level h3 { margin:8px 0 6px;font-size:12px; }
+.level p { font-size:10px;color:var(--muted); }
+.level .exit { border-top:1px solid var(--border);padding-top:8px;margin-top:9px;font-size:9px;color:var(--muted); }
+.level.highlight { background:var(--blue-soft);border-color:color-mix(in srgb,var(--site-primary) 40%,var(--border)); }
+.close-slide { background:linear-gradient(125deg,#10233E,#1D4B91 58%,#2D63E2);color:white; }
+.close-slide h2 { color:white; }
+.close-slide .lead { color:rgba(255,255,255,.76); }
+.close-slide .card { background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.20); }
+.close-slide .card h3 { color:white; }
+.close-slide .card p { color:rgba(255,255,255,.70); }
+.close-slide .card-label { color:#B9D0FF; }
+.close-slide .callout { background:rgba(255,255,255,.10);border-color:#68D5BF;color:white; }
+.footer { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 4px 0;color:var(--muted);font-size:10px; }
+.progress-track { height:4px;background:var(--border);border-radius:99px;overflow:hidden;flex:1;max-width:270px; }
+.progress-fill { height:100%;width:0;background:var(--site-primary);transition:width .2s; }
+.footer-controls { display:flex;align-items:center;gap:7px; }
+.nav-btn { border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 11px;border-radius:9px;font-size:11px;font-weight:800; }
+.nav-btn:disabled { opacity:.35;cursor:not-allowed; }
+.slide-counter { font-weight:800;min-width:48px;text-align:center;color:var(--text);font-variant-numeric:tabular-nums; }
+.notes-panel { display:none; margin:14px auto 0; width:min(100%,1540px); padding:0 30px 20px; }
+.notes-panel.open { display:block; }
+.notes-card { border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:17px 20px;box-shadow:var(--shadow); }
+.notes-title { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px; }
+.notes-title h3 { margin:0;font-size:12px; }
+.notes-card p { font-size:12px;color:var(--muted);max-width:1050px;margin:0; }
+.overview { display:none;position:fixed;inset:0;background:rgba(8,18,32,.78);z-index:30;padding:28px;overflow:auto;backdrop-filter:blur(8px); }
+.overview.open { display:block; }
+.overview-top { display:flex;justify-content:space-between;align-items:center;color:white;margin:0 auto 18px;max-width:1250px; }
+.overview-top h2 { font-size:20px;margin:0;letter-spacing:-.02em; }
+.overview-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:1250px;margin:0 auto; }
+.thumb { text-align:left;min-height:130px;border:1px solid rgba(255,255,255,.2);background:#152A45;color:white;border-radius:13px;padding:14px; }
+.thumb.active { border:2px solid #73D5C1;background:#1A385F; }
+.thumb .tn { color:#A8C3FF;font-size:9px;font-weight:900;letter-spacing:.1em; }
+.thumb strong { display:block;font-size:13px;margin:9px 0 6px; }
+.thumb span:last-child { display:block;color:rgba(255,255,255,.65);font-size:10px;line-height:1.4; }
+body.presentation-mode .topbar { height:58px;padding:0 18px; }
+body.presentation-mode #deck { padding:10px 15px 8px;max-width:1700px; }
+body.presentation-mode .slide-shell { min-height:calc(100vh - 105px); }
+body.presentation-mode .slide { min-height:calc(100vh - 130px); }
+body.presentation-mode .slide-inner { padding:clamp(20px,2.6vw,42px); }
+body.presentation-mode .footer { padding-top:7px; }
+@media(max-width:1100px) {
+  #deck { padding:18px; }
+  .cols-4 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .cols-3 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .visual-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .knowledge-flow { grid-template-columns:1fr; }
+  .knowledge-arrow { transform:rotate(90deg);height:14px; }
+  .persona-rail { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .dashboard-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .flow { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .flow-item:not(:last-child)::after { display:none; }
+  .split { grid-template-columns:1fr; }
+  .system-map { grid-template-columns:1fr 22px 1.15fr 22px 1fr; }
+  .scale { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .overview-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:760px) {
+  .topbar { height:auto;min-height:64px;padding:12px 14px;align-items:flex-start; }
+  .brand-sub,.pill-label { display:none; }
+  .brand-title { font-size:12px; }
+  .top-actions { gap:5px; }
+  .action { padding:8px;font-size:10px; }
+  #deck { padding:12px 10px; }
+  .slide-shell { min-height:unset; }
+  .slide { min-height:calc(100vh - 150px); }
+  .slide-inner,.slide-inner.wide { padding:22px 17px; }
+  .hero .slide-inner { min-height:unset;gap:40px; }
+  h1 { font-size:clamp(35px,10vw,52px); }
+  h2 { font-size:clamp(27px,7vw,36px); }
+  .cols-2,.cols-3,.cols-4,.flow,.flow.three,.flow.four,.scale { grid-template-columns:1fr; }
+  .visual-grid,.faq-grid,.persona-rail { grid-template-columns:1fr; }
+  .knowledge-flow { grid-template-columns:1fr; }
+  .knowledge-arrow { transform:rotate(90deg);height:16px; }
+  .dashboard-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .system-map { grid-template-columns:1fr; }
+  .map-arrow { transform:rotate(90deg);height:22px; }
+  .gate-row { grid-template-columns:1fr;gap:5px; }
+  .overview { padding:15px; }
+  .overview-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .notes-panel { padding:0 10px 12px; }
+  .footer { flex-wrap:wrap;font-size:9px; }
+  .progress-track { order:3;flex-basis:100%;max-width:none; }
+  .hero-stats { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%; }
+  .hero-stat { min-width:0; }
+  .domain-banner { padding:13px; }
+  .domain-banner h3 { font-size:16px; }
+}
+@media print {
+  html,body,#app { background:#fff!important;color:#17263B!important; }
+  .topbar,.footer,.notes-panel,.overview { display:none!important; }
+  #deck { width:100%;padding:0;margin:0; }
+  .slide-shell { display:block;min-height:0; }
+  .slide { display:flex!important;min-height:0;height:96vh;page-break-after:always;box-shadow:none;border:0;border-radius:0; }
+  .slide-inner { padding:28px!important; }
+  .notes-panel { display:none!important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">A↗</div>
+      <div><div class="brand-title">Spec Kit → Enterprise ADLC</div><div class="brand-sub">Executive leadership briefing · decision-led narrative</div></div>
+    </div>
+    <div class="top-actions">
+      <span class="pill-label">Executive briefing</span>
+      <button class="action" id="overviewBtn">▦ Overview</button>
+      <button class="action" id="notesBtn">▤ Speaker notes</button>
+      <button class="action primary" id="presentBtn">⛶ Present</button>
+    </div>
+  </header>
+  <main id="deck">
+    <div class="slide-shell" id="slideShell">
+      <section class="slide hero active" data-title="The opportunity" data-short="From SDLC to ADLC" data-note="Opening talk track (about 60–90 seconds): We are not proposing another coding assistant or a replacement for Jira. We are proposing a governed operating model that puts a specification at the center of delivery and uses agents to execute bounded work with evidence. The ambition is better business outcomes, shorter end-to-end delivery time, fewer defects and less repeatable toil—while retaining and refocusing our people. The numbers on these slides are a measurement design and illustrative targets, not results already achieved.">
+        <div class="slide-inner">
+          <div>
+            <div class="slide-kicker"><span class="kicker-line"></span> Leadership proposal · Human-in-the-loop engineering</div>
+            <h1>From Agile SDLC<br>to <span style="color:#9EC4FF">Human-Governed ADLC.</span></h1>
+            <p class="lead">Build an enterprise delivery framework on GitHub Spec Kit—so business intent becomes traceable specifications, bounded agent work, independently verified quality and measurable business value.</p>
+            <div class="inline-tags" style="margin-top:24px"><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">19 feature teams</span><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">180-person organization</span><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">Oracle HCM + data engineering</span><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">Human expertise remains central</span></div>
+          </div>
+          <div class="hero-footer">
+            <div class="hero-stats">
+              <div class="hero-stat"><b>Spec-first</b><span>Intent before implementation</span></div>
+              <div class="hero-stat"><b>Evidence-led</b><span>Tests and gates—not agent claims</span></div>
+              <div class="hero-stat"><b>Human-owned</b><span>Business decisions and release risk</span></div>
+            </div>
+            <div class="hero-note">Decision today: authorize a controlled pilot, baseline measurement, named owners and clear quality guardrails.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="What we are solving" data-short="Why change the lifecycle" data-note="Frame these as risks to validate in the current baseline, not criticism of teams. Existing Agile is valuable for planning and coordination, but Jira status alone does not guarantee that intent, design constraints, code, test evidence and the deployed result stay connected. Agent tools can accelerate tasks while also magnifying ambiguity or rework unless the lifecycle is governed end to end.">
+        <div class="slide-inner">
+          <div class="slide-kicker"><span class="kicker-line"></span> 01 · The case for change</div>
+          <h2>Our constraint is not just coding speed.<br>It is the <span style="color:var(--site-primary)">whole delivery system.</span></h2>
+          <p class="lead">Today’s SDLC gives us planning and tracking. ADLC should connect intent → knowledge → execution → proof → production learning.</p>
+          <div class="grid cols-4" style="margin-top:23px">
+            <div class="card"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h10M4 19h7"/><circle cx="18" cy="12" r="3"/><path d="m16.5 18 1.5-2 1.5 2"/></svg></div><div class="card-label">Fragmented intent</div><h3>Requirements lose context</h3><p>Business asks, Jira Stories, architecture decisions, acceptance criteria and actual tests can drift apart across teams.</p></div>
+            <div class="card"><div class="icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z"/><path d="M3.5 12 12 16.5 20.5 12M3.5 16.5 12 21l8.5-4.5"/></svg></div><div class="card-label">Knowledge risk</div><h3>Rules are scattered</h3><p>Critical policy, configuration, formulas, schemas and system behavior live across documents, repositories and experts.</p></div>
+            <div class="card"><div class="icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 21 19H3L12 3Z"/><path d="M12 9v4M12 16.5h.01"/></svg></div><div class="card-label">Late discovery</div><h3>Integration and defects surface late</h3><p>Local task completion does not prove end-to-end business correctness, data reconciliation or production safety.</p></div>
+            <div class="card"><div class="icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V6M4 18h17"/><path d="m7 14 4-4 3 2 5-6"/><circle cx="19" cy="6" r="1.5"/></svg></div><div class="card-label">Measurement gap</div><h3>Activity is easier to count than value</h3><p>Raw story points, generated code and agent sessions can miss review burden, hidden rework and escaped defects.</p></div>
+          </div>
+          <div class="callout"><strong>Problem statement to validate</strong>We lack one consistently enforced, evidence-backed path from approved business intent through system implementation to verified production outcomes. The pilot will establish the baseline and show where the largest avoidable delay, rework and risk actually occur.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="The proposal in one picture" data-short="Spec Kit + enterprise controls" data-note="Explain the distinction carefully. Spec Kit is the specification-driven development foundation. Enterprise ADLC is our operating framework built around it: knowledge governance, Jira integration, orchestration, harnesses, policy and approval gates, technology-specific verification, telemetry and continuous improvement. We are not claiming Spec Kit alone implements every enterprise control or integration.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 02 · The solution</div>
+          <h2>Use Spec Kit as the method.<br>Build the <span style="color:var(--site-primary)">enterprise control system</span> around it.</h2>
+          <p class="lead">A common specification-driven core, with configurable technology packs and explicit controls where our enterprise environment needs them.</p>
+          <div class="grid cols-3" style="margin-top:22px">
+            <div class="card blue"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/></svg></div><div class="card-label">Foundation · Spec Kit</div><h3>Structured intent artifacts</h3><ul class="bullet-list"><li>Specify and clarify the business need</li><li>Plan implementation against constraints</li><li>Break work into tasks and checklists</li><li>Analyze artifacts for gaps and inconsistency</li></ul></div>
+            <div class="card"><div class="icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="8.5" y="15" width="7" height="6" rx="1"/><path d="M6.5 10v2h11V10M12 12v3"/></svg></div><div class="card-label">Enterprise layer</div><h3>Governed delivery orchestration</h3><ul class="bullet-list"><li>Trusted knowledge with provenance</li><li>Jira Story Factory and traceability</li><li>Agent harnesses + scoped tools</li><li>Durable workflow, retries and human gates</li></ul></div>
+            <div class="card"><div class="icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.3 2.3 4.8-5"/></svg></div><div class="card-label">Trust + evidence</div><h3>Quality before autonomy</h3><ul class="bullet-list"><li>Independent CI and domain test packs</li><li>Role-based approvals and release controls</li><li>Telemetry for cost, quality and effort</li><li>Learning loop with versioned rollback</li></ul></div>
+          </div>
+          <div class="callout good"><strong>Design principle</strong>Agents do bounded work; deterministic checks prove what can be checked deterministically; authorized people decide business meaning, material exceptions and high-risk production actions.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why Spec Kit vs BMAD" data-short="Method selection" data-note="Talk track: This is a fit-for-purpose selection, not a claim that BMAD is inferior. Spec Kit is proposed as our common specification-driven contract because the core path is explicit and customizable, can be adapted to existing engineering and governance processes, and supports multiple coding-agent integrations. BMAD offers richer named role workflows and product/architecture planning, which may be an advantage for teams wanting a more prescriptive agent team. Both still require our enterprise controls for authorized knowledge, Jira integration, security, independent quality gates and production governance. Before scaling, run the same representative HCM and ETL change through both and score the evidence, not the brand. Official references: https://github.github.com/spec-kit/ and https://docs.bmad-method.org/.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 02A · Framework choice</div>
+          <h2>Choose a common delivery contract—not a framework religion.</h2>
+          <p class="lead">Recommended starting point: Spec Kit for the specification-driven core, with an enterprise ADLC layer for our controls, source systems and measurable outcomes.</p>
+          <div class="grid cols-2" style="margin-top:20px">
+            <div class="card blue">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/><path d="m8 8 1.2 1.2L11.5 7"/></svg></div>
+              <div class="card-label">Recommended foundation · Spec Kit</div><h3>Make the specification the durable contract</h3>
+              <ul class="bullet-list"><li>Clear artifact flow: Specify → Plan → Tasks → Implement → Converge, with clarification/checklist/analyze added for complex changes</li><li>Reusable templates, checklists, workflow extensions and organizational standards can be customized</li><li>Agent integrations allow a consistent method without requiring one model or coding-agent brand for every team</li><li>Fits an enterprise strategy where Jira, CI/CD, architecture control and release approvals remain separate systems of record</li></ul>
+              <div class="visual-legend"><a class="tag blue" href="https://github.github.com/spec-kit/" target="_blank" rel="noreferrer">Official Spec Kit docs ↗</a><a class="tag" href="https://github.github.io/spec-kit/guides/customization.html" target="_blank" rel="noreferrer">Customization guide ↗</a></div>
+            </div>
+            <div class="card">
+              <div class="icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.5 7 6.5 15.5M13.5 7l4 8.5M7.5 18h9"/></svg></div>
+              <div class="card-label">Viable alternative · BMAD</div><h3>Role-based agent collaboration</h3>
+              <ul class="bullet-list"><li>Named role workflows can support analyst, product manager, product owner, architect and developer perspectives</li><li>Useful where teams want a more prescriptive sequence for product discovery, planning and role-specific artifacts</li><li>Could be evaluated for selected teams or phases instead of being dismissed or adopted by default</li><li>Still needs enterprise integration for approved knowledge, portfolio traceability, policy gates, audit and production evidence</li></ul>
+              <div class="visual-legend"><a class="tag teal" href="https://docs.bmad-method.org/" target="_blank" rel="noreferrer">Official BMAD docs ↗</a></div>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:14px">
+            <table class="table"><thead><tr><th>Decision criterion</th><th>What this program needs</th><th>How we will decide</th></tr></thead><tbody>
+              <tr><td>Business intent stays stable</td><td>Traceable spec, criteria, tasks and code; visible gaps when artifacts diverge.</td><td>Run a requirement-change and acceptance-criteria test through each framework.</td></tr>
+              <tr><td>Works across 100+ repositories</td><td>Repo-specific rules and permissions, common metadata, cross-repo dependencies and no single giant prompt.</td><td>Prototype on one HCM/config repo and one ETL/data repo, then measure source coverage and setup effort.</td></tr>
+              <tr><td>Enterprise governance</td><td>Jira links, approved knowledge, security boundaries, human gates, audit evidence, durable orchestration and telemetry.</td><td>Score the surrounding ADLC integration separately; neither methodology alone is the complete enterprise control plane.</td></tr>
+              <tr><td>Adoption and maintenance</td><td>Low-friction workflow for existing teams; reusable standards without copying every rule into every repo.</td><td>Measure time to onboard a team, template drift, upkeep effort and user acceptance.</td></tr>
+            </tbody></table>
+          </div>
+          <div class="callout good"><strong>Selection decision proposed</strong>Standardize on Spec Kit as the initial SDD contract; benchmark BMAD against the same real scenarios before scale. Revisit the choice if measured evidence shows BMAD delivers better traceability, maintainability, quality or total cost for our portfolio.</div>
+          <p class="small" style="margin-top:9px">Frameworks evolve. Validate the current documented capabilities and versions during the pilot; this is a program-fit recommendation, not a permanent feature comparison.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="The end-to-end lifecycle" data-short="From intent to evidence" data-note="Walk left to right. The Story Factory sits inside Specify/Clarify: it retrieves approved context and generates draft Jira artifacts. It does not bypass business clarification. After acceptance, Spec Kit planning and task generation use the approved specification. Verification produces evidence tied to the exact artifact. Production events feed the learning loop.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 03 · The operating model</div>
+          <h2>One connected lifecycle.<br><span style="color:var(--site-primary)">No gap between the spec and the release.</span></h2>
+          <p class="body-copy" style="max-width:880px">The orchestrator holds the state machine; Spec Kit shapes the engineering artifacts; the harness constrains each agent; independent gates determine what can proceed.</p>
+          <div class="flow" style="margin-top:25px">
+            <div class="flow-item"><div class="flow-no">01 · INTAKE</div><h3>Business intent</h3><p>Outcome, owner, scope, priority, risk and change ID.</p></div>
+            <div class="flow-item"><div class="flow-no">02 · DISCOVER</div><h3>Trusted context</h3><p>Approved rules, architecture, contracts, code and dependencies.</p></div>
+            <div class="flow-item"><div class="flow-no">03 · SPECIFY</div><h3>Clarify + Story Factory</h3><p>Requirements, Epics/Stories, source-linked acceptance criteria.</p></div>
+            <div class="flow-item"><div class="flow-no">04 · PLAN</div><h3>Plan + tasks</h3><p>Linked child specs, task DAG, test strategy and owners.</p></div>
+            <div class="flow-item"><div class="flow-no">05 · IMPLEMENT</div><h3>Bounded agents</h3><p>Scoped workspace, tool policy, commits and reviewable PRs.</p></div>
+          </div>
+          <div class="flow four" style="margin-top:10px">
+            <div class="flow-item"><div class="flow-no">06 · VERIFY</div><h3>Prove the change</h3><p>Independent tests, security scans, contract/data checks and traceable results.</p></div>
+            <div class="flow-item"><div class="flow-no">07 · APPROVE</div><h3>Human decisions</h3><p>Required reviews, change approvals and operational readiness.</p></div>
+            <div class="flow-item"><div class="flow-no">08 · RELEASE</div><h3>Deploy + reconcile</h3><p>Verify actual artifact, production behavior and business outcomes.</p></div>
+            <div class="flow-item"><div class="flow-no">09 · LEARN</div><h3>Improve safely</h3><p>Feed failures into tests, source fixes, workflow tuning and measured promotion.</p></div>
+          </div>
+          <div class="callout warning"><strong>Stop-the-line rule</strong>Unknown business behavior, a conflict with an approved rule, missing critical evidence, failed mandatory test or unavailable required approver means hold, clarify or escalate—not automatic progression.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Human gates and harnesses" data-short="Human control + independent proof" data-note="A harness is the controlled environment around an agent: context, instructions, permitted tools, time and cost limits, state, logging and outputs. It is distinct from the orchestrator, which tracks lifecycle state and decides the next step, and from test harnesses, which execute independent tests. Human gates are risk-based and should be enforced centrally rather than left to individual prompts.">
+        <div class="slide-inner">
+          <div class="slide-kicker"><span class="kicker-line"></span> 04 · Human accountability</div>
+          <h2>Automate the work.<br><span style="color:var(--site-primary)">Keep judgment and authority human.</span></h2>
+          <div class="split" style="margin-top:20px">
+            <div class="grid" style="gap:9px">
+              <div class="gate-row"><div class="gate">Gate 1 · Intent</div><div><div class="what">Product Owner / business SME</div><div class="proof">Confirms business outcome, calculation meaning, exceptions, effective dates and acceptance criteria.</div></div><div class="tag blue">Approved spec</div></div>
+              <div class="gate-row"><div class="gate">Gate 2 · Design</div><div><div class="what">Architect / system owner</div><div class="proof">Resolves conflicting rules, approves material design changes and confirms system boundaries/contracts.</div></div><div class="tag blue">Decision + contract</div></div>
+              <div class="gate-row"><div class="gate">Gate 3 · Build</div><div><div class="what">Engineer / code owner</div><div class="proof">Reviews generated changes, scope, maintainability, permissions and actual diff; agent cannot self-approve.</div></div><div class="tag teal">Reviewed PR</div></div>
+              <div class="gate-row"><div class="gate">Gate 4 · Verify</div><div><div class="what">QA / security / data controls</div><div class="proof">Independently verify tests, security, contract compatibility, reconciliation and risk-specific requirements.</div></div><div class="tag teal">Test evidence</div></div>
+              <div class="gate-row"><div class="gate">Gate 5 · Release</div><div><div class="what">Release authority / operations</div><div class="proof">Authorizes the release; checks rollback, runbooks, monitoring and post-deployment business validation.</div></div><div class="tag amber">Release decision</div></div>
+            </div>
+            <div class="grid" style="align-content:start;gap:11px">
+              <div class="card blue"><div class="card-label">Agent harness</div><h3>Constrain execution</h3><p>Approved context, least-privilege tools, workspace isolation, time/cost budgets, bounded loops, structured output and audit trail.</p></div>
+              <div class="card teal"><div class="card-label">Orchestrator</div><h3>Coordinate lifecycle</h3><p>Durable state, dependencies, retries, idempotency, timeouts, escalation, evidence joins and event correlation.</p></div>
+              <div class="card amber"><div class="card-label">Test harness + gate engine</div><h3>Prove and decide</h3><p>Run deterministic checks and independent tests; evaluate required evidence. “Agent says pass” is never a control.</p></div>
+            </div>
+          </div>
+          <div class="callout"><strong>Control invariant</strong>Timeout is not approval. Regeneration does not overwrite signed-off intent. High-risk or irreversible actions are never authorized solely by model confidence.</div>
+          <div class="persona-rail" aria-label="Persona responsibilities">
+            <div class="persona-node"><div class="role">Business</div><strong>PO / functional SME</strong><p>Owns need, policy meaning, examples and acceptance.</p></div>
+            <div class="persona-node"><div class="role">Delivery</div><strong>TPM / product lead</strong><p>Coordinates cross-team scope, dependencies, risks and outcomes.</p></div>
+            <div class="persona-node"><div class="role">Architecture</div><strong>Architect / system owner</strong><p>Owns boundaries, approved patterns and interface decisions.</p></div>
+            <div class="persona-node"><div class="role">Platform + knowledge</div><strong>AI platform / knowledge steward</strong><p>Maintains ingestion, permissions, evaluations, harnesses and versioned source packs.</p></div>
+            <div class="persona-node"><div class="role">Engineering + operations</div><strong>Dev / QA / SRE / release</strong><p>Reviews changes, independently verifies quality and authorizes controlled operations.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Harnesses across the lifecycle" data-short="Harnesses across phases" data-note="Use harness as a keyword consistently throughout the operating model. Each phase has a stage-specific harness contract: inputs, allowed tools/actions, policies, limits, evidence and escalation. The agent harness constrains one agent run; a test harness executes independent checks; the orchestrator coordinates the whole change. They work together but are not interchangeable.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 04A · Harness design</div>
+          <h2>The harness is the safety contract at every phase—not just coding.</h2>
+          <p class="lead">Every phase receives controlled context, explicit permissions, measurable limits, a structured output contract and a rule for when to stop or escalate.</p>
+          <div class="visual-grid" style="margin-top:18px">
+            <div class="visual-card"><div class="visual-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 10h10M4 15h8M4 20h5"/><circle cx="18" cy="15" r="3"/><path d="m16.5 21 1.5-2 1.5 2"/></svg></div><h3>Knowledge harness</h3><p>Source allowlist, ACL-aware retrieval, freshness/version rules, provenance, source ranking and injection-resistant handling.</p><div class="visual-legend"><span class="tag">Output: cited context pack</span></div></div>
+            <div class="visual-card"><div class="visual-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h5"/></svg></div><h3>Specification / Story harness</h3><p>Approved templates, completeness checks, ambiguity handling, rule references, Jira field contract and duplicate prevention.</p><div class="visual-legend"><span class="tag teal">Output: traceable draft</span></div></div>
+            <div class="visual-card"><div class="visual-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="8.5" y="15" width="7" height="6" rx="1"/><path d="M6.5 10v2h11V10M12 12v3"/></svg></div><h3>Plan / task harness</h3><p>Dependency discovery, task boundaries, repo ownership, technology-pack selection, sequencing and scope limits.</p><div class="visual-legend"><span class="tag amber">Output: task DAG</span></div></div>
+            <div class="visual-card"><div class="visual-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h5M8 17h3"/></svg></div><h3>Agent execution harness</h3><p>Isolated workspace, least-privilege tools, approved model/context, time and cost budgets, bounded loops and structured outputs.</p><div class="visual-legend"><span class="tag">Output: diff + run trace</span></div></div>
+            <div class="visual-card"><div class="visual-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="m7 12 3 3 7-7"/></svg></div><h3>Test / evaluation harness</h3><p>Independent oracles, deterministic gate checks, domain regression packs, evidence-to-commit binding and must-pass policies.</p><div class="visual-legend"><span class="tag teal">Output: verified evidence</span></div></div>
+            <div class="visual-card"><div class="visual-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.3 2.3 4.8-5"/></svg></div><h3>Release / learning harness</h3><p>Human approval state, environment guard, rollback plan, post-deploy reconciliation, candidate knowledge updates and canary/rollback.</p><div class="visual-legend"><span class="tag">Output: signed decision + telemetry</span></div></div>
+          </div>
+          <div class="grid cols-3" style="margin-top:13px">
+            <div class="card blue"><div class="card-label">Agent harness</div><h3>Constrains an invocation</h3><p>What it can see, which tools it can call, what it may change, how long it can run and what evidence it must return.</p></div>
+            <div class="card teal"><div class="card-label">Workflow orchestrator</div><h3>Coordinates the lifecycle</h3><p>Tracks durable state, task dependencies, retries, concurrency, approvals, escalation and the next allowed transition.</p></div>
+            <div class="card amber"><div class="card-label">Policy / gate engine</div><h3>Evaluates evidence</h3><p>Allows progression only when mandatory conditions are satisfied; a generated “pass” statement is never sufficient.</p></div>
+          </div>
+          <div class="callout warning"><strong>Enterprise harness contract</strong>Input context + allowed actions + output schema + evidence requirements + limits + stop conditions + responsible approver. Reuse this contract across teams; specialize the rules for each domain, system and risk tier.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Reference architecture" data-short="Architecture and evidence flow" data-note="The diagram is conceptual, not a mandated technology bill of materials. Retain existing Jira, source control and CI/CD. The orchestration platform can use an existing workflow engine; AWS Step Functions/EventBridge/SQS is a candidate pattern if aligned with platform standards. Keep payroll/employee-sensitive content under existing authorization and logging policies; leadership telemetry should use minimized metadata.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 05 · Enterprise architecture</div>
+          <h2>Reuse existing platforms.<br><span style="color:var(--site-primary)">Add a thin, governed control plane.</span></h2>
+          <div class="system-map" style="margin-top:22px">
+            <div class="map-column">
+              <div class="map-box"><strong>Business + portfolio</strong>Intake · Jira · Jira Align links · decisions · owners</div>
+              <div class="map-box"><strong>Knowledge sources</strong>Approved policy · design records · repositories · contracts · runbooks</div>
+              <div class="map-box"><strong>Systems being changed</strong>Oracle HCM · PeopleSoft · APIs · AWS Glue / data lake · UI / config / Terraform</div>
+            </div>
+            <div class="map-arrow">→</div>
+            <div class="map-column">
+              <div class="map-box focus"><strong>Knowledge + specification services</strong>Permission-aware retrieval · versioned source packs · Spec Kit artifacts · Jira Story Factory · traceability</div>
+              <div class="map-box focus"><strong>ADLC orchestration</strong>State machine · dependency DAG · agent harnesses · policy gates · approval routing · bounded retries</div>
+              <div class="map-box focus"><strong>Execution + independent verification</strong>Scoped agents · Git/PR · existing CI/CD · technology test packs · security / data-quality checks</div>
+            </div>
+            <div class="map-arrow">→</div>
+            <div class="map-column">
+              <div class="map-box safe"><strong>Controlled human decisions</strong>Business meaning · architecture exceptions · code review · quality · production authorization</div>
+              <div class="map-box safe"><strong>Verified outcomes</strong>Accepted work · CI evidence · deployed artifact · reconciliation · incidents / defects</div>
+              <div class="map-box safe"><strong>Learning + leadership metrics</strong>Versioned knowledge candidates · golden-set results · human hours · time / cost / quality / ROI</div>
+            </div>
+          </div>
+          <div class="grid cols-3" style="margin-top:17px">
+            <div class="card"><div class="card-label">Integration contract</div><h3>One stable change identity</h3><p>Correlate each business change to spec version, Jira items, repositories, commits, PRs, CI runs, approvals and deployment records—even when multiple teams participate.</p></div>
+            <div class="card"><div class="card-label">Security boundary</div><h3>Minimum required context</h3><p>Authorization before retrieval and tool use; secrets redaction; environment separation; audited write permissions; restricted operational data kept out of broad analytics.</p></div>
+            <div class="card"><div class="card-label">Build philosophy</div><h3>Integrate, do not duplicate</h3><p>Keep Jira and portfolio systems as systems of record. ADLC orchestration links artifacts and evidence; it should not become another ungoverned copy of work items.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Knowledge fabric for 100 repositories" data-short="Trusted enterprise knowledge" data-note="This is a federated, permission-aware knowledge fabric—not one unrestricted vector index. Use source adapters and events to index code structure, documents, contracts, infrastructure, configurations and model/agent assets. Retain repository and system owners, commit/version, classification, approval/effective date, hashes, ACLs and freshness. For 100 repositories, build reusable ingestion conventions and shared metadata, with per-domain retrieval policies and cross-repository dependency links. Keep the actual source of truth in Git, Jira, approved policy repositories and system registries.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 05A · Enterprise knowledge</div>
+          <h2>100 repositories require a governed knowledge fabric—not a giant prompt.</h2>
+          <p class="lead">Build one searchable, permission-aware view across systems while preserving each source as the system of record and each domain’s security boundary.</p>
+          <div class="knowledge-flow" aria-label="Enterprise knowledge ingestion and retrieval">
+            <div class="knowledge-col">
+              <div class="knowledge-node"><strong>100+ GitHub repos</strong>Application services, React, APIs, test suites, shared libraries and repository-level conventions.</div>
+              <div class="knowledge-node"><strong>AWS infrastructure</strong>Terraform, modules, IAM/network policies, deployment workflows and runtime configuration.</div>
+              <div class="knowledge-node"><strong>HR / HCM platforms</strong>Oracle HCM setups, Fast Formula, PeopleSoft pension/401(k) artifacts, runbooks and approved rule documents.</div>
+              <div class="knowledge-node"><strong>Data + AI assets</strong>Vendor schemas, ETL jobs, data contracts, model cards, prompts, evaluation sets and agent/tool definitions.</div>
+            </div>
+            <div class="knowledge-arrow">→</div>
+            <div class="knowledge-col">
+              <div class="knowledge-node focus"><strong>Source adapters + change events</strong>Git webhooks/scheduled scans, document connectors and metadata ingestion.</div>
+              <div class="knowledge-node focus"><strong>Parse and normalize</strong>AST/symbol indexing, dependency extraction, schemas, structured metadata and human-readable chunks.</div>
+              <div class="knowledge-node focus"><strong>Policy before retrieval</strong>Repository/role ACL, classification, secret/PII controls, tenant boundaries and source allowlists.</div>
+            </div>
+            <div class="knowledge-arrow">→</div>
+            <div class="knowledge-col">
+              <div class="knowledge-node safe"><strong>Governed registry</strong>Source ID, owner, commit/version, hash, approved state, effective date, classification, ACL and freshness.</div>
+              <div class="knowledge-node safe"><strong>Knowledge graph</strong>Repo → service → API/schema → data product → owner → dependency → test → deployment link.</div>
+              <div class="knowledge-node safe"><strong>Evaluation layer</strong>Golden questions, citation support, conflict tests, permission-deny tests and domain-specific must-pass rules.</div>
+            </div>
+            <div class="knowledge-arrow">→</div>
+            <div class="knowledge-col">
+              <div class="knowledge-node focus"><strong>Task-specific context pack</strong>Only approved, relevant snippets and dependency facts for this change and identity.</div>
+              <div class="knowledge-node"><strong>Spec Kit + harness</strong>Specify, clarify, plan, tasks and implement with citations and source versions.</div>
+              <div class="knowledge-node"><strong>Approved sources remain authoritative</strong>AI retrieval accelerates discovery; it does not replace Git, Jira, approved policy or system records.</div>
+            </div>
+          </div>
+          <div class="grid cols-3" style="margin-top:10px">
+            <div class="visual-card"><div class="visual-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v13H4z"/><path d="M8 3v6M16 3v6M4 11h16"/></svg></div><h3>Code changes drive candidates</h3><p>After merge, rebuild knowledge from the exact commit, update symbols and dependency links, and tombstone verified deletions in the candidate index.</p></div>
+            <div class="visual-card"><div class="visual-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V6M4 18h17"/><path d="m7 14 4-4 3 2 5-6"/></svg></div><h3>Deployments establish runtime facts</h3><p>After successful deployment, record the actual artifact, environment, config version, runbook and health/reconciliation result—not just the merged commit.</p></div>
+            <div class="visual-card"><div class="visual-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="M8 12h8"/></svg></div><h3>Promotion remains governed</h3><p>Validate provenance, grounding, freshness and permissions; hold failed candidates, retain last-known-good and require domain-owner approval for policy meaning changes.</p></div>
+          </div>
+          <div class="callout"><strong>Scale pattern</strong>Share the ingestion and metadata platform; maintain domain-specific access, evaluations and knowledge packs. Do not index secrets or all HR data for convenience, and do not fine-tune a model on restricted content just because it is available. Use source-linked retrieval unless a separately approved model-training use case exists.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Domain walkthrough one" data-short="Oracle HCM configuration" data-note="This is a representative scenario, not a claim about a specific tenant configuration. Oracle HCM Fast Formula rules can encode intricate eligibility, calculation and effective-date behavior. In a real pilot, select one low-to-moderate-risk formula/config change with an accountable functional owner and a safe test environment. Use the actual approved formula sources and system-native deployment processes. Do not let a language model invent expected calculation outputs; SMEs and approved business examples define the oracle.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 06 · Domain proof point 1</div>
+          <div class="domain-banner"><div><div class="card-label" style="color:#B9D0FF">HCM configuration · Example change path</div><h3>Oracle HCM + Fast Formula business logic</h3><p>Complex eligibility, calculations, effective dating, payroll/benefit dependencies and configuration-specific behavior.</p></div><div class="domain-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="M8 12h8M12 8v8"/></svg></div></div>
+          <div class="split">
+            <div>
+              <div class="card-label">Illustrative business request</div>
+              <h3 style="font-size:19px;max-width:650px">“Update an eligibility rule for a future effective date without changing existing employee outcomes.”</h3>
+              <p class="body-copy">ADLC discovers the approved rule, current formula and dependencies; it turns the desired change into explicit behavior and generates a controlled, testable implementation package.</p>
+              <div class="grid cols-2" style="margin-top:14px">
+                <div class="criterion"><b>AC-01 · Effective date</b><p>Before the approved effective date, existing rule outcomes remain unchanged; on/after the date, the approved new rule applies.</p></div>
+                <div class="criterion"><b>AC-02 · Eligibility boundaries</b><p>Approved examples cover eligible, ineligible and boundary cases; the result matches the functional owner's expected outcome.</p></div>
+                <div class="criterion"><b>AC-03 · Regression</b><p>Unrelated populations / formula paths remain unchanged across the approved regression cohort.</p></div>
+                <div class="criterion"><b>AC-04 · Audit + rollback</b><p>Formula/config version, approvals and environment promotion are traceable; recovery follows the approved runbook.</p></div>
+              </div>
+            </div>
+            <div class="grid" style="align-content:start;gap:9px">
+              <div class="card blue"><div class="card-label">Context pack</div><h3>What is retrieved</h3><p>Approved policy and effective date · formula and configuration version · relevant HCM setup · upstream/downstream dependencies · functional examples · prior incidents / accepted test cases.</p></div>
+              <div class="card"><div class="card-label">Control points</div><h3>What must be proven</h3><ul class="bullet-list"><li>Formula syntax and supported constructs validated in the actual toolchain</li><li>Expected outcomes independently confirmed by the functional owner</li><li>Positive, negative, boundary and effective-dated regression tests executed</li><li>Configuration diff reviewed; environment and promotion controls enforced</li><li>Post-promotion verification and operational handover recorded</li></ul></div>
+              <div class="callout warning"><strong>Human gate</strong>The functional/business owner approves business meaning and expected calculations; the HCM/configuration owner approves technical change and promotion; production authority decides release. No generated formula is trusted just because it compiles.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Compensation configuration engine" data-short="Compensation engine end to end" data-note="This single-slide scenario shows how a change to a compensation configuration capability moves through the lifecycle. Keep the system boundary illustrative until architecture and functional owners confirm which rules live in Oracle HCM Fast Formula, an existing compensation engine, configuration tables, services or vendor systems. The business owner supplies approved expected results. Agents draft and test; they do not invent compensation logic or authorize a production change.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 06A · End-to-end example</div>
+          <div class="domain-banner"><div><div class="card-label" style="color:#B9D0FF">Compensation configuration project</div><h3>Change a compensation rule without changing unintended outcomes</h3><p>One business request → governed rule change → validated configuration and formula → controlled release.</p></div><div class="domain-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M7 9h10M8 15h8"/><path d="M4.8 5.8 7 8M19.2 5.8 17 8"/></svg></div></div>
+          <div class="architecture-visual" role="img" aria-label="Compensation rule change from business intent through knowledge and specification, build and test, controlled release">
+            <svg viewBox="0 0 1080 185" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="compGrad" x1="0" x2="1"><stop offset="0" stop-color="#2D63E2"/><stop offset="1" stop-color="#12A58C"/></linearGradient></defs>
+              <path d="M160 85H220M365 85H425M570 85H630M775 85H835" stroke="url(#compGrad)" stroke-width="4" stroke-linecap="round"/><path d="m212 77 9 8-9 8M417 77l9 8-9 8M622 77l9 8-9 8M827 77l9 8-9 8" fill="none" stroke="#2D63E2" stroke-width="3" stroke-linejoin="round"/>
+              <g><rect x="8" y="28" width="152" height="112" rx="13" fill="#E8EFFF" stroke="#BFCFF4"/><circle cx="84" cy="55" r="13" fill="#2D63E2"/><path d="M78 55h12M84 49v12" stroke="#fff" stroke-width="2"/><text x="84" y="84" text-anchor="middle" font-size="12" font-weight="700">Business intent</text><text x="84" y="101" text-anchor="middle" font-size="10" class="svg-muted">Rule + effective date</text><text x="84" y="116" text-anchor="middle" font-size="10" class="svg-muted">Expected outcomes</text></g>
+              <g><rect x="220" y="28" width="145" height="112" rx="13" fill="#E2F7F2" stroke="#9DDFD1"/><circle cx="292" cy="55" r="13" fill="#12A58C"/><path d="M286 51h12M286 56h12M286 61h8" stroke="#fff" stroke-width="1.7"/><text x="292" y="84" text-anchor="middle" font-size="12" font-weight="700">Knowledge + SDD</text><text x="292" y="101" text-anchor="middle" font-size="10" class="svg-muted">Policy / formula</text><text x="292" y="116" text-anchor="middle" font-size="10" class="svg-muted">Spec + Jira ACs</text></g>
+              <g><rect x="425" y="28" width="145" height="112" rx="13" fill="#F7F9FD" stroke="#DAE2EF"/><circle cx="497" cy="55" r="13" fill="#5E6D83"/><path d="m490 56 5 5 9-11" fill="none" stroke="#fff" stroke-width="2"/><text x="497" y="84" text-anchor="middle" font-size="12" font-weight="700">Build / configure</text><text x="497" y="101" text-anchor="middle" font-size="10" class="svg-muted">Fast Formula / engine</text><text x="497" y="116" text-anchor="middle" font-size="10" class="svg-muted">Scoped change set</text></g>
+              <g><rect x="630" y="28" width="145" height="112" rx="13" fill="#FFF3E1" stroke="#EED0A3"/><circle cx="702" cy="55" r="13" fill="#D18B2D"/><path d="m696 55 4 4 8-9" fill="none" stroke="#fff" stroke-width="2"/><text x="702" y="84" text-anchor="middle" font-size="12" font-weight="700">Independent tests</text><text x="702" y="101" text-anchor="middle" font-size="10" class="svg-muted">Boundaries + regression</text><text x="702" y="116" text-anchor="middle" font-size="10" class="svg-muted">Expected vs actual</text></g>
+              <g><rect x="835" y="28" width="235" height="112" rx="13" fill="#E2F7F2" stroke="#9DDFD1"/><circle cx="952" cy="55" r="13" fill="#12A58C"/><path d="m946 55 4 4 8-9" fill="none" stroke="#fff" stroke-width="2"/><text x="952" y="84" text-anchor="middle" font-size="12" font-weight="700">Human approval + release</text><text x="952" y="101" text-anchor="middle" font-size="10" class="svg-muted">Functional + technical owner</text><text x="952" y="116" text-anchor="middle" font-size="10" class="svg-muted">Deploy / verify / rollback ready</text></g>
+              <text x="540" y="167" text-anchor="middle" font-size="10" class="svg-muted">Every arrow carries versioned artifacts, the change ID and gate evidence; a failed gate routes back to clarification or correction.</text>
+            </svg>
+          </div>
+          <div class="grid cols-3" style="margin-top:12px">
+            <div class="visual-card"><div class="visual-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg></div><h3>Spec Kit + Story Factory</h3><p>Draft the Epic/Stories and acceptance criteria from the approved policy, existing configuration/formula, effective-dated examples and known interfaces.</p></div>
+            <div class="visual-card"><div class="visual-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z"/><path d="M8 12h8M12 8v8"/></svg></div><h3>Mandatory test scenarios</h3><p>Eligible/ineligible populations, boundary values, effective-date transitions, rounding/defaults where applicable, negative cases and unchanged populations.</p></div>
+            <div class="visual-card"><div class="visual-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V6M4 18h17"/><path d="m7 14 4-4 3 2 5-6"/></svg></div><h3>Outcome evidence</h3><p>Expected-vs-actual comparison against functional-owner-approved examples, formula/config diff, CI results, approvals and verified deployed version.</p></div>
+          </div>
+          <div class="callout warning"><strong>Human gates</strong>Functional owner approves compensation meaning and test oracle; architect/HCM owner approves technical fit and configuration boundary; QA validates independent evidence; authorized change owner approves production promotion. Actual business calculations and source precedence must come from approved enterprise records.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Domain walkthrough two" data-short="Complex ETL / data lake" data-note="This scenario illustrates an ETL change spanning extraction, transformation, partitioning and a downstream data product. The important distinction is that validation must prove the data outcome against independent business control totals and source/target expectations, not just that a Glue job succeeded. A representative pilot should use synthetic or approved masked test data where possible, and test idempotency, late-arriving data and backfills.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 07 · Domain proof point 2</div>
+          <div class="domain-banner"><div><div class="card-label" style="color:#B9D0FF">Data engineering · Example change path</div><h3>Complex ETL pipeline · AWS Glue → data lake</h3><p>Multi-source ingestion, changing schemas, transformation logic, partitions, replay/backfill and downstream reporting.</p></div><div class="domain-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div></div>
+          <div class="flow four" style="margin-bottom:16px">
+            <div class="flow-item"><div class="flow-no">SOURCE</div><h3>APIs / files / tables</h3><p>Capture schema, source version, arrival time, ownership and source totals.</p></div>
+            <div class="flow-item"><div class="flow-no">TRANSFORM</div><h3>Glue / business logic</h3><p>Implement mapping, filtering, joins, derivations, effective dates and null/default behavior.</p></div>
+            <div class="flow-item"><div class="flow-no">STORE</div><h3>Lake / partitions</h3><p>Validate target schema, layout, partition keys, access and write semantics.</p></div>
+            <div class="flow-item"><div class="flow-no">CONSUME</div><h3>Reports / models / apps</h3><p>Prove downstream contract compatibility and business reconciliation.</p></div>
+          </div>
+          <div class="split">
+            <div class="grid cols-2">
+              <div class="criterion"><b>AC-01 · Schema</b><p>Supported source schema versions are processed; invalid or unapproved breaking changes fail clearly rather than silently dropping fields.</p></div>
+              <div class="criterion"><b>AC-02 · Transformation</b><p>Approved input fixtures produce expected outputs for mappings, joins, calculations, nulls, duplicates and boundary conditions.</p></div>
+              <div class="criterion"><b>AC-03 · Reconciliation</b><p>Source-to-target counts, key totals / checksums and approved variance tolerances match expected controls.</p></div>
+              <div class="criterion"><b>AC-04 · Recovery</b><p>Retry, replay, late data and backfill are idempotent; rerunning does not duplicate or corrupt target outcomes.</p></div>
+            </div>
+            <div class="card">
+              <div class="card-label">Technology pack + human gate</div>
+              <h3>How correctness is demonstrated</h3>
+              <ul class="bullet-list"><li>Unit fixtures for transformation functions and representative end-to-end datasets</li><li>Schema evolution, data quality, null/duplicate/range and referential-integrity checks</li><li>Partition correctness, input/output record counts, business totals and variance thresholds</li><li>Permissions, encryption, retention and restricted data handling</li><li>Retries, checkpointing, idempotency, late data and backfill validation</li><li>Owner sign-off on control totals, tolerances, downstream contracts and release readiness</li></ul>
+              <div class="callout good"><strong>Key distinction</strong>A successful Glue run is an execution signal. A reconciled data product with verified business totals, schema contract and acceptable downstream behavior is the business outcome.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Payroll automation and control dashboard" data-short="Multi-vendor payroll ETL" data-note="Present this as a representative target-state use case; source vendors, file/API protocols, timing, data classes, reconciliation tolerances and payroll controls must be confirmed with the actual payroll and vendor owners. The ADLC creates features, adapters, transformation logic, tests and dashboard components from approved specifications. The operations dashboard uses actual job, data-quality, exception and reconciliation telemetry. It must not infer payroll success from an ETL job status alone.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 07A · Payroll automation scenario</div>
+          <div class="domain-banner"><div><div class="card-label" style="color:#B9D0FF">Payroll modernization · Multi-vendor ETL</div><h3>Automate the payroll data flow—and generate the control dashboard</h3><p>Multiple source/vendor systems → standardized ingestion → validated payroll data products → approved downstream processing and operational visibility.</p></div><div class="domain-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h4M7 16h7"/><circle cx="17" cy="14" r="2"/></svg></div></div>
+          <div class="architecture-visual" role="img" aria-label="Multi-vendor payroll pipeline feeding a reconciled payroll data product and operations metrics dashboard">
+            <svg viewBox="0 0 1100 270" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="payGrad" x1="0" x2="1"><stop offset="0" stop-color="#2D63E2"/><stop offset="1" stop-color="#12A58C"/></linearGradient></defs>
+              <g font-size="11" font-weight="700">
+                <rect x="10" y="18" width="185" height="42" rx="9" fill="#E8EFFF" stroke="#BFCFF4"/><text x="102" y="35" text-anchor="middle">Employee / HCM</text><text x="102" y="49" text-anchor="middle" font-size="9" class="svg-muted">Identity + job + effective dates</text>
+                <rect x="10" y="72" width="185" height="42" rx="9" fill="#E8EFFF" stroke="#BFCFF4"/><text x="102" y="89" text-anchor="middle">Time / attendance vendors</text><text x="102" y="103" text-anchor="middle" font-size="9" class="svg-muted">Hours + approvals + late feeds</text>
+                <rect x="10" y="126" width="185" height="42" rx="9" fill="#E8EFFF" stroke="#BFCFF4"/><text x="102" y="143" text-anchor="middle">Benefits / deductions</text><text x="102" y="157" text-anchor="middle" font-size="9" class="svg-muted">ESPP / 401(k) / pension where in scope</text>
+                <rect x="10" y="180" width="185" height="42" rx="9" fill="#E8EFFF" stroke="#BFCFF4"/><text x="102" y="197" text-anchor="middle">Tax / finance / other vendors</text><text x="102" y="211" text-anchor="middle" font-size="9" class="svg-muted">Jurisdiction + control totals</text>
+              </g>
+              <path d="M195 39H228V121H247M195 93H228M195 147H228M195 201H228V121" fill="none" stroke="url(#payGrad)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="m239 114 8 7-8 7" fill="none" stroke="#2D63E2" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="248" y="67" width="190" height="108" rx="13" fill="#F7F9FD" stroke="#DAE2EF"/><circle cx="343" cy="91" r="13" fill="#2D63E2"/><path d="M337 91h12M343 85v12" stroke="#fff" stroke-width="1.7"/><text x="343" y="117" text-anchor="middle" font-size="12" font-weight="700">Ingestion + normalize</text><text x="343" y="134" text-anchor="middle" font-size="10" class="svg-muted">API / SFTP / files / tables</text><text x="343" y="149" text-anchor="middle" font-size="10" class="svg-muted">Schema + identity + lineage</text>
+              <path d="M438 121H470" stroke="url(#payGrad)" stroke-width="3" stroke-linecap="round"/><path d="m462 114 8 7-8 7" fill="none" stroke="#2D63E2" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="472" y="67" width="190" height="108" rx="13" fill="#E2F7F2" stroke="#9DDFD1"/><circle cx="567" cy="91" r="13" fill="#12A58C"/><path d="M561 86h12v10h-12zM563 99h8" stroke="#fff" stroke-width="1.4"/><text x="567" y="117" text-anchor="middle" font-size="12" font-weight="700">Glue / ETL processing</text><text x="567" y="134" text-anchor="middle" font-size="10" class="svg-muted">Rules + joins + dedupe</text><text x="567" y="149" text-anchor="middle" font-size="10" class="svg-muted">DQ + retry + replay / backfill</text>
+              <path d="M662 121H694" stroke="url(#payGrad)" stroke-width="3" stroke-linecap="round"/><path d="m686 114 8 7-8 7" fill="none" stroke="#2D63E2" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="696" y="67" width="175" height="108" rx="13" fill="#FFF3E1" stroke="#EED0A3"/><circle cx="783" cy="91" r="13" fill="#D18B2D"/><path d="M777 91h12M783 85v12" stroke="#fff" stroke-width="1.7"/><text x="783" y="117" text-anchor="middle" font-size="12" font-weight="700">Reconcile + control</text><text x="783" y="134" text-anchor="middle" font-size="10" class="svg-muted">Counts / totals / tolerances</text><text x="783" y="149" text-anchor="middle" font-size="10" class="svg-muted">Exception queue + approval</text>
+              <path d="M871 121H903" stroke="url(#payGrad)" stroke-width="3" stroke-linecap="round"/><path d="m895 114 8 7-8 7" fill="none" stroke="#2D63E2" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="905" y="55" width="185" height="132" rx="13" fill="#10233E" stroke="#335B91"/><text x="997" y="77" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF" style="fill:#FFFFFF">Payroll operations</text><path d="M924 91h147M924 116h147M924 141h147" stroke="#42618A" stroke-width="1"/><g fill="#FFFFFF" style="fill:#FFFFFF" font-size="9"><text x="925" y="104">Run status</text><text x="1068" y="104" text-anchor="end">Green / Amber / Red</text><text x="925" y="129">Vendor feed health</text><text x="1068" y="129" text-anchor="end">Freshness + rejects</text><text x="925" y="154">Reconciliation</text><text x="1068" y="154" text-anchor="end">Variance + exceptions</text></g><text x="550" y="246" text-anchor="middle" font-size="10" class="svg-muted">Actual system/vendor boundaries and movement protocols are confirmed with owners; green status requires both technical success and business controls.</text>
+            </svg>
+          </div>
+          <div class="grid cols-2" style="margin-top:13px">
+            <div class="card"><div class="card-label">Spec Kit generates features</div><h3>From approved payroll needs to engineering work</h3><ul class="bullet-list"><li>Vendor/source adapters and configurable ingestion patterns</li><li>Schema mapping, effective-date logic, deduplication and transformation features</li><li>Data-quality rules, exception routing, rerun/backfill and audit evidence</li><li>Metrics/dashboard stories, alert definitions and drill-down links</li><li>Source-linked acceptance criteria, tests and parent/child Jira traceability</li></ul></div>
+            <div class="card teal"><div class="card-label">Control dashboard</div><h3>Measure the actual payroll pipeline</h3><p>These are proposed dashboard measures, populated from real orchestration, vendor, Glue, data-quality and reconciliation events—not invented by the agent.</p>
+              <div class="dashboard-metrics">
+                <div class="dashboard-metric"><span>Payroll run status</span><strong>State</strong><small>Started / complete / held</small></div>
+                <div class="dashboard-metric"><span>Vendor feed freshness</span><strong>Age</strong><small>Expected vs actual arrival</small></div>
+                <div class="dashboard-metric"><span>Records processed / rejected</span><strong>Counts</strong><small>By source and run</small></div>
+                <div class="dashboard-metric"><span>Reconciliation variance</span><strong>Δ</strong><small>Against approved tolerance</small></div>
+                <div class="dashboard-metric"><span>Unmatched identities</span><strong>#</strong><small>Employee / vendor key exceptions</small></div>
+                <div class="dashboard-metric"><span>ETL retries / failures</span><strong>Rate</strong><small>By job and failure category</small></div>
+                <div class="dashboard-metric"><span>Time to payroll-ready</span><strong>P50/P85</strong><small>Source receipt → validated</small></div>
+                <div class="dashboard-metric"><span>Control evidence coverage</span><strong>%</strong><small>Required checks with evidence</small></div>
+              </div>
+            </div>
+          </div>
+          <div class="callout warning"><strong>Release rule</strong>Payroll-ready means required vendor inputs are complete, source-to-target control totals reconcile within approved limits, critical exceptions are resolved or formally held, and an authorized operations/business owner approves proceeding. A green Glue job alone does not prove payroll correctness.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Quality assurance by change type" data-short="Quality gates produce evidence" data-note="Make the quality architecture explicit: common gates apply to all changes, and the orchestrator selects technology-specific packs based on spec metadata, changed files, repository, deployment manifest and dependency map. Mixed changes execute the union of applicable packs. The test oracle must be independent of the agent that generated the code where material business correctness is at stake.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 08 · Quality engineered into the flow</div>
+          <h2>Every gate emits evidence.<br><span style="color:var(--site-primary)">Every evidence item maps to a requirement.</span></h2>
+          <div class="table-wrap" style="margin-top:18px">
+            <table class="table"><thead><tr><th>Change surface</th><th>Required checks</th><th>Evidence captured</th><th>Human control</th></tr></thead><tbody>
+              <tr><td>All changes</td><td>Spec traceability, lint/type/schema, unit/regression, dependency and secret scans, requirement coverage.</td><td>Spec version, commit SHA, CI run, test report, gate result.</td><td>Code review; required unresolved-blocker disposition.</td></tr>
+              <tr><td>HCM config / Fast Formula</td><td>Syntax/toolchain validation, configuration diff, formula-level fixtures, eligibility/effective-date edge cases, regression cohort, rollback compatibility.</td><td>Formula/config version, expected vs actual values, test scenario IDs, promotion evidence.</td><td>Functional calculation oracle; HCM owner approval; controlled promotion.</td></tr>
+              <tr><td>API / integration</td><td>OpenAPI/schema compatibility, consumer contract, authN/authZ, negative/idempotency, resilience and selected load tests.</td><td>Contract diff, test reports, security scans and dependency versions.</td><td>Service/consumer owners accept compatibility and risk.</td></tr>
+              <tr><td>Glue / ETL / data</td><td>Mapping fixtures, schema evolution, null/duplicate/range, counts/totals/checksums, partitions, retries, late data and backfill.</td><td>Source/target dataset versions, job runs, DQ results and reconciliation variance.</td><td>Data/business owner approves expected totals and tolerances.</td></tr>
+              <tr><td>React UI</td><td>Lint/type, unit/integration, browser E2E, accessibility, visual regression, bundle/dependency checks.</td><td>Test reports, browser matrix, accessibility findings and approved snapshots.</td><td>Product + QA approve user journeys and accessibility exceptions.</td></tr>
+              <tr><td>Terraform / infra</td><td>Format/validate, module tests, policy-as-code, IAM/network/encryption scans and plan analysis.</td><td>Plan hash, policy result, resource diff, deployment identity and recovery test.</td><td>Infrastructure/change authority approves destructive/high-impact actions.</td></tr>
+              <tr><td>Cross-system</td><td>Union of component packs, contracts, end-to-end acceptance, business reconciliation and resilience tests.</td><td>Parent change manifest links child specs, PRs, all gates, deployments and production result.</td><td>TPM coordinates; owners accept their domain; release authority authorizes go-live.</td></tr>
+            </tbody></table>
+          </div>
+          <div class="grid cols-3" style="margin-top:14px">
+            <div class="card teal"><div class="card-label">Deterministic checks</div><h3>Machine-enforce where possible</h3><p>Schema, policy, test execution, approvals, target environment, hashes and reconciliation tolerance should be programmatically enforced where feasible.</p></div>
+            <div class="card"><div class="card-label">Semantic checks</div><h3>Ground and review</h3><p>Business meaning, design interpretation and expected calculation outcomes require trusted sources and the appropriate owner—not confidence scores.</p></div>
+            <div class="card amber"><div class="card-label">Failed evidence</div><h3>Hold, retry safely or escalate</h3><p>Bounded retries for transient failures; changed artifacts invalidate affected evidence; no silent bypass for critical or flaky tests.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Metrics at each gate" data-short="Instrument the full lifecycle" data-note="Do not begin by claiming expected percentage gains. First instrument the lifecycle and agree definitions. Distinguish active human hours from elapsed queue time. Attribute model/tool, CI, review and rework costs. Keep story points as within-team trend only; compare across teams using accepted outcomes, work mix, capacity, quality and cycle-time distributions.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 09 · Measure the lifecycle</div>
+          <h2>Measure what each gate proves—not just what the agent did.</h2>
+          <div class="table-wrap" style="margin-top:19px">
+            <table class="table"><thead><tr><th>Gate / phase</th><th>Primary measures</th><th>Why leadership cares</th></tr></thead><tbody>
+              <tr><td>Intake / discovery</td><td>Request completeness; time to identify owner/source; dependency coverage; duplicate rate; unresolved questions and queue time.</td><td>Shows the quality of the demand signal and time lost before engineering starts.</td></tr>
+              <tr><td>Knowledge retrieval</td><td>Golden-set grounded correctness by domain/risk; valid citation rate; source freshness; unauthorized retrieval leakage; failed evaluation rate.</td><td>Determines which domains may safely operate in assisted, gated or higher autonomy.</td></tr>
+              <tr><td>Spec / Story Factory</td><td>Criteria with source provenance; first-pass PO acceptance; material rewrite rate; missed-rule/conflict rate; time from request to approved spec.</td><td>Tests whether business intent becomes clear, accurate, testable work faster.</td></tr>
+              <tr><td>Plan / tasks</td><td>Plan acceptance; discovered dependencies; task rework; cross-spec/contract contradictions; work blocked on decisions.</td><td>Reveals whether the plan is executable across system boundaries.</td></tr>
+              <tr><td>Implement / PR</td><td>Human hours per accepted change; first-pass review acceptance; rework loops; agent/tool cost; cycle time by active vs waiting.</td><td>Measures net work saved, not code-generation volume.</td></tr>
+              <tr><td>Verify / security</td><td>Required gate pass; independent coverage; test flake rate; defect escape; security finding disposition; data reconciliation variance.</td><td>Quality is a scale gate; faster output is not success if risk rises.</td></tr>
+              <tr><td>Release / operate</td><td>Deployment success / change-failure rate; rollback/recovery; time to verify; incidents and business validation.</td><td>Confirms the actual deployed result and operational risk.</td></tr>
+              <tr><td>Learn / economics</td><td>Cost per accepted change; full human effort; knowledge promotion/rollback; hours redeployed; net benefit and confidence.</td><td>Shows whether the operating model is improving with evidence and where to invest next.</td></tr>
+            </tbody></table>
+          </div>
+          <div class="grid cols-4" style="margin-top:13px">
+            <div class="metric"><div class="label">THROUGHPUT</div><div class="value">Accepted / FTE-week</div><div class="hint">Size/work-type adjusted outputs per available capacity.</div></div>
+            <div class="metric"><div class="label">EFFORT</div><div class="value">Human hours / change</div><div class="hint">All roles, review, supervision, test repair and rework included.</div></div>
+            <div class="metric"><div class="label">FLOW</div><div class="value">P50 / P85 time</div><div class="hint">Request → accepted/released; separate active time from queues.</div></div>
+            <div class="metric"><div class="label">QUALITY</div><div class="value">Escaped defects + risk</div><div class="hint">Fixed observation window; severity and exposure tracked.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="How we compare with current SDLC" data-short="Fair, outcome-based comparison" data-note="This slide is central to credibility. Set the metrics and guardrails before reviewing outcomes. Use a pre-pilot baseline, matched control teams or comparable work where feasible, multiple work types, and a defined defect observation window. Account for learning time and platform costs. Avoid cross-team story-point comparisons and individual developer rankings. Do not convert released capacity to cash savings unless cash impact is actually realized.">
+        <div class="slide-inner">
+          <div class="slide-kicker"><span class="kicker-line"></span> 10 · Evidence before claims</div>
+          <h2>Compare current SDLC and ADLC on <span style="color:var(--site-primary)">equivalent outcomes.</span></h2>
+          <div class="grid cols-2" style="margin-top:18px">
+            <div class="card"><div class="card-label">Current SDLC baseline</div><h3>Measure before intervention</h3><ul class="bullet-list"><li>Jira issue + status history, sprint/capacity and work type</li><li>PR review/rework time, CI duration and failure rate</li><li>Human effort by role / stage, including operational follow-up</li><li>Defects, incidents, release failures and business corrections</li><li>Current cost of tooling, test environments and coordination</li></ul></div>
+            <div class="card blue"><div class="card-label">ADLC pilot cohort</div><h3>Capture the same signals plus ADLC-specific evidence</h3><ul class="bullet-list"><li>Spec and knowledge versions, grounded criteria and gate outcomes</li><li>Agent/harness runtime, tool/model/CI cost and retry loops</li><li>Human interventions, accepted/rejected outputs and correction hours</li><li>Traceability from change ID through PR, tests, release and production</li><li>Same escaped-defect observation window and workload classifications</li></ul></div>
+          </div>
+          <div class="grid cols-3" style="margin-top:14px">
+            <div class="metric"><div class="label">PRODUCTIVITY</div><div class="value">More accepted value</div><div class="hint">Higher accepted throughput or lower total human effort per comparable change.</div></div>
+            <div class="metric"><div class="label">QUALITY</div><div class="value">No risk trade-off</div><div class="hint">Stable or improved escaped defects, change failures, security and reconciliation outcomes.</div></div>
+            <div class="metric"><div class="label">ECONOMICS</div><div class="value">Positive net value</div><div class="hint">Benefits less model, CI, enablement, governance, review and rework cost.</div></div>
+          </div>
+          <div class="callout warning"><strong>Method guardrails</strong>Use within-team story points only for within-team trends; never rank engineers by AI usage; report sample size, data completeness and confidence; separate capacity released from actual cash savings. Publish no illustrative dashboard metric as a pilot result until calculated from real data.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Learning model and accuracy" data-short="Improve with evidence" data-note="Learning should mean controlled improvement of sources, tests, prompts, retrieval and workflow policies—not uncontrolled self-modification. Separate code-derived facts from approved business policy. After PR merge, create a candidate knowledge view; after a verified deployment, update deployment-specific operational facts. Validate provenance, privacy, access controls, contradictions and golden-set performance before promotion. Keep last-known-good and rollback.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 11 · A system that gets better safely</div>
+          <h2>Learning is a governed release process,<br>not a model rewriting its own rules.</h2>
+          <div class="flow four" style="margin-top:21px">
+            <div class="flow-item"><div class="flow-no">OBSERVE</div><h3>Capture failures</h3><p>Unsupported claims, rule conflict, missed test, human correction, CI failure, production defect or reconciliation variance.</p></div>
+            <div class="flow-item"><div class="flow-no">DIAGNOSE</div><h3>Fix the right layer</h3><p>Approved source, knowledge retrieval, spec template, task prompt, test pack, classifier, orchestrator or telemetry.</p></div>
+            <div class="flow-item"><div class="flow-no">EVALUATE</div><h3>Replay and canary</h3><p>Golden-set questions, negative access tests, regression suites, contract checks and domain-specific fixtures.</p></div>
+            <div class="flow-item"><div class="flow-no">PROMOTE</div><h3>Version or rollback</h3><p>Promote only after gate evidence; preserve source history and last-known-good; reverse failed candidates.</p></div>
+          </div>
+          <div class="grid cols-2" style="margin-top:15px">
+            <div class="card teal"><div class="card-label">Knowledge accuracy / grounding</div><h3>Measure by domain and risk</h3><ul class="bullet-list"><li>Golden-set answer correctness with evidence support</li><li>Claim-to-source coverage and citation validity</li><li>Freshness/effective-date correctness and contradiction rate</li><li>Authorization leakage tests: zero tolerated for restricted data</li><li>Critical must-pass rules tested separately from aggregate score</li></ul></div>
+            <div class="card amber"><div class="card-label">Proposed promotion policy</div><h3>Use a threshold plus hard stops</h3><p>For initial experiments, an aggregate 90% golden-set floor may be a proposed minimum for promotion; critical business rules must pass every designated must-pass test. The right threshold must be calibrated with owners, sample coverage and risk. A 90% score is not a claim of production safety.</p><div class="inline-tags"><span class="tag amber">Fail → assisted mode</span><span class="tag blue">Pass → canary evaluation</span><span class="tag teal">Owner approves policy changes</span></div></div>
+          </div>
+          <div class="callout"><strong>Sources of learning</strong>Agent corrections, reviewer feedback, CI/test outcomes, deployment state, operations incidents and human hours. Candidate updates should be versioned and replayable; approved business policies and architecture decisions change only through their formal decision process.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Maturity and autonomy" data-short="Earn more autonomy" data-note="Autonomy is granted by domain and task category when evidence supports it, not by a blanket enterprise percentage. A mature ETL test pack does not automatically authorize autonomous changes to a high-risk HCM formula or production infrastructure. Each level needs entry/exit criteria, rollback capability, defined ownership and monitoring.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 12 · Maturity by evidence</div>
+          <h2>We do not jump to full autonomy.<br><span style="color:var(--site-primary)">We earn it, one risk boundary at a time.</span></h2>
+          <div class="scale" style="margin-top:23px">
+            <div class="level"><div class="n">LEVEL 0</div><h3>Current SDLC</h3><p>Human-led Jira delivery; AI may be ad hoc; evidence and effort baselines are fragmented.</p><div class="exit"><b>To advance</b><br>Baseline + traceability + authorized knowledge sources.</div></div>
+            <div class="level"><div class="n">LEVEL 1</div><h3>Assisted &amp; measured</h3><p>Spec Kit drafts, source-linked requirements, human review, CI and telemetry established.</p><div class="exit"><b>To advance</b><br>Reliable grounding and repeatable control evidence.</div></div>
+            <div class="level highlight"><div class="n">LEVEL 2</div><h3>Gated execution</h3><p>Orchestrator runs bounded tasks; independent tests and mandatory human approvals control transitions.</p><div class="exit"><b>To advance</b><br>Repeatable low-risk correctness, bounded cost, clean rollback.</div></div>
+            <div class="level"><div class="n">LEVEL 3</div><h3>Bounded autonomy</h3><p>Validated, low-risk reversible tasks proceed automatically within specific policy boundaries.</p><div class="exit"><b>To advance</b><br>Stable production outcomes and active drift detection.</div></div>
+            <div class="level"><div class="n">LEVEL 4</div><h3>Adaptive portfolio</h3><p>Portfolio telemetry guides investment and safe workflow changes with governance and human oversight.</p><div class="exit"><b>Always required</b><br>Accountability, audits, versioning, kill switch and rollback.</div></div>
+          </div>
+          <div class="grid cols-3" style="margin-top:17px">
+            <div class="card"><div class="card-label">Autonomy is scoped</div><h3>By domain + action</h3><p>Specify permitted operation, data class, environment, risk tier, allowed tools, approval requirement and rollback conditions.</p></div>
+            <div class="card"><div class="card-label">Critical stays human-controlled</div><h3>Business and production authority</h3><p>Material policy changes, sensitive payroll/benefit outcomes, security exceptions and high-impact infrastructure need authorized human decisions.</p></div>
+            <div class="card"><div class="card-label">Drift reduces autonomy</div><h3>Automatic downgrade</h3><p>Failed evaluations, rising defects, stale sources or cost-loop anomalies can return a domain to assisted mode until corrected.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="90-day pilot" data-short="Prove it in 90 days" data-note="This is a proposed sequence, not a committed date plan. Start with 4–6 representative teams if capacity and ownership support it, including the HCM configuration and ETL lanes. Keep matched SDLC comparators for similar work. The first month should instrument and validate the problem, not chase automation volume. Review go/no-go decisions with business, architecture, QA, security, operations and finance/measurement partners.">
+        <div class="slide-inner">
+          <div class="slide-kicker"><span class="kicker-line"></span> 13 · Pilot plan</div>
+          <h2>Prove value in 90 days.<br><span style="color:var(--site-primary)">Scale only when the evidence says so.</span></h2>
+          <div class="flow three" style="margin-top:22px">
+            <div class="flow-item"><div class="flow-no">DAYS 0–30 · BASELINE</div><h3>Observe + instrument</h3><ul class="bullet-list"><li>Select two real, bounded domain scenarios</li><li>Map current Jira → code → CI → release paths</li><li>Create approved knowledge/source inventory and golden tests</li><li>Capture baseline cycle time, effort, defects and costs</li><li>Define quality / risk limits before outcomes</li></ul></div>
+            <div class="flow-item"><div class="flow-no">DAYS 31–60 · PILOT</div><h3>Generate + gate</h3><ul class="bullet-list"><li>Run Story Factory in shadow/draft mode</li><li>Generate Spec Kit artifacts and traceable acceptance criteria</li><li>Execute HCM + ETL technology-specific packs</li><li>Measure review/rework hours and every gate outcome</li><li>Keep required human approvals in force</li></ul></div>
+            <div class="flow-item"><div class="flow-no">DAYS 61–90 · EVALUATE</div><h3>Compare + decide</h3><ul class="bullet-list"><li>Compare matched work / controls and baseline</li><li>Review quality, security, accuracy, cost and net effort</li><li>Close high-risk assumptions or keep automation constrained</li><li>Assess capacity redeployment and operating impact</li><li>Make scale / extend / hold decision on evidence</li></ul></div>
+          </div>
+          <div class="grid cols-2" style="margin-top:16px">
+            <div class="card blue"><div class="card-label">Recommended pilot setup</div><h3>4–6 teams · two domain lanes · matched comparator where feasible</h3><p>Keep scope small enough for close review, but diverse enough to test both configuration-driven business logic and data-pipeline correctness. Final team count depends on ownership, access, and live work availability.</p></div>
+            <div class="card"><div class="card-label">Go / no-go scorecard</div><h3>Must prove all three</h3><ul class="bullet-list"><li><b>Value:</b> lower total human effort or faster accepted outcomes</li><li><b>Quality:</b> stable or better escaped defects, security and reconciliation</li><li><b>Control:</b> traceability, authorized approvals, reliable telemetry and recoverable workflow</li></ul></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Risks and mitigations" data-short="Risks are designed into controls" data-note="Emphasize that a risk register and failure-mode testing are part of the proposed operating model, not evidence that these failures have already occurred. The pilot should validate the highest-risk assumptions first: knowledge authority, critical expected outcomes, independence of tests, least privilege, cross-system dependencies, human effort visibility, and safe retry/release behaviors.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 14 · Risk is part of the design</div>
+          <h2>The main failure modes are known categories.<br><span style="color:var(--site-primary)">We make them testable and owned.</span></h2>
+          <div class="grid cols-3" style="margin-top:19px">
+            <div class="card red"><div class="card-label">Knowledge + intent</div><h3>Stale source or invented rule</h3><p>Use source owner/version/effective date, claim traceability, rule conflict detection and owner clarification. Unsupported material claims block readiness.</p></div>
+            <div class="card red"><div class="card-label">Quality independence</div><h3>Agent writes its own false proof</h3><p>Use independent expected results, QA-reviewed oracle fixtures, negative cases and production reconciliation—not tests designed only to confirm generated behavior.</p></div>
+            <div class="card red"><div class="card-label">Security + data</div><h3>Privilege or data leakage</h3><p>Authorize before retrieval/tool use, isolate environments, redact sensitive telemetry and test prompt-injection and access-deny scenarios.</p></div>
+            <div class="card amber"><div class="card-label">Cross-system delivery</div><h3>Hidden dependency or contract drift</h3><p>Maintain linked parent/child specs, versioned contracts, dependency DAG, compatibility tests and end-to-end validation.</p></div>
+            <div class="card amber"><div class="card-label">Reliability</div><h3>Duplicate retries or endless loops</h3><p>Durable workflow state, idempotency keys, bounded tool/model budgets, timeouts, dead-letter handling and replay tests.</p></div>
+            <div class="card amber"><div class="card-label">Measurement</div><h3>Productivity appears better than reality</h3><p>Include human review, context repair, rework, CI and tool cost; use comparable work, matched controls, confidence and quality guardrails.</p></div>
+          </div>
+          <div class="callout warning"><strong>Open assumptions need owners</strong>Before scale, validate the actual source hierarchy, critical rule sets, system ownership/lineage, permission model, acceptance-test oracles, human-effort capture and production recovery procedures. If a control cannot be evidenced, narrow the automation rather than waive the control.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Executive FAQ" data-short="Risk and value FAQ" data-note="Use this as an appendix or anticipated challenge slide. Acknowledge limitations plainly. ADLC can amplify mistakes if source knowledge is wrong, criteria are ambiguous, tests are weak or privileges are broad. The response is constrained autonomy, independent evidence, human decision rights, transparent costs, red-team tests and a controlled pilot—not promises that agents never fail. Productivity gains are hypotheses until measured against the current SDLC with comparable work, complete human effort and quality guardrails.">
+        <div class="slide-inner wide">
+          <div class="slide-kicker"><span class="kicker-line"></span> 15A · Questions executives will ask</div>
+          <h2>Frequently asked questions.<br><span style="color:var(--site-primary)">Credibility is part of the control design.</span></h2>
+          <div class="faq-grid" style="margin-top:18px">
+            <article class="faq-item"><h3>Will agents change existing business rules without approval?</h3><p>They must not. Rule and design claims are tied to approved, versioned sources. Conflict, missing authority or requested deviation becomes a clarification/decision item and holds affected work. Human approval remains required for material business changes.</p></article>
+            <article class="faq-item"><h3>What if the knowledge base is stale or wrong?</h3><p>Measure grounding by domain against reviewed golden sets, test citations and effective dates, check source freshness and permissions, keep the last-known-good version and hold failed candidates. A failing domain moves to assisted mode until evidence passes.</p></article>
+            <article class="faq-item"><h3>How can we trust tests written by an AI agent?</h3><p>Do not rely on agent-authored tests alone. Acceptance expected-results come from the business/functional owner; independent test packs and deterministic checks validate the exact commit; critical domains require domain-specific regression and reconciliation evidence.</p></article>
+            <article class="faq-item"><h3>What happens when an agent, model, tool or CI pipeline fails?</h3><p>The workflow persists state, uses bounded retries and idempotency keys, records the failure and cost, escalates after limits, and resumes or rolls back under policy. A timeout is not a pass, and a failed mandatory gate cannot be silently bypassed.</p></article>
+            <article class="faq-item"><h3>Could payroll, HCM or infrastructure changes be released autonomously?</h3><p>Autonomy is scoped by risk, action and environment. Critical calculations, sensitive data, high-impact cloud changes, exceptions and production releases retain authorized human decision gates. Low-risk reversible tasks may earn more autonomy only after repeatable evidence.</p></article>
+            <article class="faq-item"><h3>How do we measure real productivity instead of AI activity?</h3><p>Compare accepted outcomes, active human hours per accepted change, P50/P85 cycle time, first-pass correctness, escaped defects, change failures and full model/tool/CI/review/rework cost. Use a same-team baseline and matched controls where feasible; never compare story points across teams as a common currency.</p></article>
+            <article class="faq-item"><h3>Does faster delivery mean fewer people are needed?</h3><p>No such assumption is built into this proposal. First verify capacity released after all review, supervision and rework. Track how those hours are redeployed to business features, deeper testing, resilience, architecture and reducing operational toil. Count cash savings only if actually realized.</p></article>
+            <article class="faq-item"><h3>Why not adopt BMAD or buy a full platform now?</h3><p>Spec Kit is the proposed starting SDD contract, not an irreversible bet. Benchmark Spec Kit and BMAD on the same HCM and ETL use cases and compare quality, traceability, onboarding, maintainability, governance integration and total cost. Reuse existing Jira, Git and CI/CD first; buy or extend only where a proven gap remains.</p></article>
+            <article class="faq-item"><h3>How can this scale across 100+ repositories?</h3><p>Use shared ingestion metadata and standards with per-repository ownership, access controls, source versions and domain-specific evaluations. Build cross-repo dependency links and task-specific context packs instead of putting all source material into one unrestricted prompt or index.</p></article>
+            <article class="faq-item"><h3>What proof is required before expanding the pilot?</h3><p>Pre-agreed baseline, sample size and observation window; measurable improvement in effort or accepted delivery; stable or better security, defect and reconciliation outcomes; verified provenance and human approvals; and positive net value after platform, enablement and governance costs.</p></article>
+          </div>
+          <div class="callout"><strong>Board-level answer</strong>We are not asking to trust AI output. We are asking to pilot a governed delivery system that makes business intent explicit, constrains execution, tests outcomes independently, preserves human accountability and scales only when measured evidence supports it.</div>
+        </div>
+      </section>
+
+      <section class="slide close-slide" data-title="The leadership ask" data-short="Decision and sponsorship" data-note="Close with a specific ask, not a broad approval to transform everything. Ask to sponsor a scoped 90-day pilot, nominate business/architecture/QA/security/operations owners, permit access to approved non-production knowledge and tool environments, agree the baseline and guardrails before execution, and protect time for human review and measurement. State explicitly that the purpose is to improve product outcomes and refocus staff on higher-value work, not assume workforce reduction.">
+        <div class="slide-inner">
+          <div>
+            <div class="slide-kicker"><span class="kicker-line"></span> Decision requested</div>
+            <h2>Approve the pilot.<br>Insist on evidence.<br><span style="color:#9EC4FF">Scale what works.</span></h2>
+            <p class="lead">A disciplined path to better delivery: grounded specifications, constrained agents, independent proof, accountable humans and measurable learning.</p>
+          </div>
+          <div class="grid cols-3" style="margin-top:19px">
+            <div class="card"><div class="card-label">01 · Sponsor</div><h3>Authorize the scope</h3><p>Nominate executive sponsors, product/business owners and domain architects for the HCM configuration and ETL pilots.</p></div>
+            <div class="card"><div class="card-label">02 · Enable</div><h3>Provide governed access</h3><p>Approve pilot repositories, Jira metadata, reference knowledge, sandbox environments, CI evidence and appropriately scoped agent tooling.</p></div>
+            <div class="card"><div class="card-label">03 · Measure</div><h3>Agree guardrails before results</h3><p>Baseline SDLC, define quality/security gates and event metrics, and agree decision criteria with QA, operations and measurement partners.</p></div>
+          </div>
+          <div class="callout" style="margin-top:17px"><strong>Commitment</strong>We will not claim success from code volume or agent usage. We will demonstrate whether we produce accepted business outcomes faster, with equal or better quality, lower total effort and clear accountability—and use released capacity to improve products, resilience and engineering depth.</div>
+          <div class="hero-footer" style="margin-top:24px"><div class="inline-tags"><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">Spec Kit foundation</span><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">Human-in-the-loop</span><span class="tag" style="color:white;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)">Measured outcomes</span></div><div class="hero-note">Working proposal · architecture and thresholds to be validated with owners · all performance values require real baseline and pilot telemetry.</div></div>
+        </div>
+      </section>
+    </div>
+    <div class="footer">
+      <div id="footerTopic">ADLC Executive Briefing · Illustrative design</div>
+      <div class="progress-track" aria-label="Presentation progress"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="footer-controls"><button class="nav-btn" id="prevBtn" aria-label="Previous slide">← Back</button><span class="slide-counter" id="slideCounter">01 / 14</span><button class="nav-btn" id="nextBtn" aria-label="Next slide">Next →</button></div>
+    </div>
+  </main>
+  <aside class="notes-panel" id="notesPanel" aria-label="Speaker notes"><div class="notes-card"><div class="notes-title"><h3>Presenter talking points</h3><span class="tag blue" id="notesFor">Slide 1</span></div><p id="notesText"></p></div></aside>
+  <div class="overview" id="overview" role="dialog" aria-modal="true" aria-label="Slide overview"><div class="overview-top"><h2>Presentation overview</h2><button class="action" id="closeOverview">✕ Close</button></div><div class="overview-grid" id="overviewGrid"></div></div>
+</div>
+<script>
+(() => {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const slideCounter = document.getElementById('slideCounter');
+  const progressFill = document.getElementById('progressFill');
+  const footerTopic = document.getElementById('footerTopic');
+  const notesPanel = document.getElementById('notesPanel');
+  const notesText = document.getElementById('notesText');
+  const notesFor = document.getElementById('notesFor');
+  const overview = document.getElementById('overview');
+  const overviewGrid = document.getElementById('overviewGrid');
+  let index = 0;
+  let notesOpen = false;
+  const pad = n => String(n).padStart(2, '0');
+
+  function renderOverview() {
+    overviewGrid.innerHTML = slides.map((slide, i) => {
+      const title = slide.dataset.title || `Slide ${i + 1}`;
+      const short = slide.dataset.short || title;
+      return `<button class="thumb ${i === index ? 'active' : ''}" data-goto="${i}"><span class="tn">SLIDE ${pad(i + 1)}</span><strong>${title}</strong><span>${short}</span></button>`;
+    }).join('');
+    overviewGrid.querySelectorAll('[data-goto]').forEach(button => button.addEventListener('click', () => {
+      goTo(Number(button.dataset.goto));
+      overview.classList.remove('open');
+    }));
+  }
+
+  function goTo(next) {
+    index = Math.max(0, Math.min(slides.length - 1, next));
+    slides.forEach((slide, i) => {
+      const active = i === index;
+      slide.classList.toggle('active', active);
+      slide.setAttribute('aria-hidden', String(!active));
+    });
+    const current = slides[index];
+    slideCounter.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
+    progressFill.style.width = `${((index + 1) / slides.length) * 100}%`;
+    footerTopic.textContent = `${current.dataset.short || current.dataset.title} · Executive briefing`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === slides.length - 1;
+    notesText.textContent = current.dataset.note || 'No presenter notes for this slide.';
+    notesFor.textContent = `Slide ${index + 1} of ${slides.length}`;
+    renderOverview();
+  }
+  prevBtn.addEventListener('click', () => goTo(index - 1));
+  nextBtn.addEventListener('click', () => goTo(index + 1));
+  document.getElementById('overviewBtn').addEventListener('click', () => overview.classList.add('open'));
+  document.getElementById('closeOverview').addEventListener('click', () => overview.classList.remove('open'));
+  overview.addEventListener('click', event => { if (event.target === overview) overview.classList.remove('open'); });
+  document.getElementById('notesBtn').addEventListener('click', () => {
+    notesOpen = !notesOpen;
+    notesPanel.classList.toggle('open', notesOpen);
+    document.getElementById('notesBtn').textContent = notesOpen ? '▤ Hide notes' : '▤ Speaker notes';
+  });
+  document.getElementById('presentBtn').addEventListener('click', async () => {
+    document.body.classList.toggle('presentation-mode');
+    const active = document.body.classList.contains('presentation-mode');
+    document.getElementById('presentBtn').textContent = active ? '⛶ Exit present' : '⛶ Present';
+    if (active && document.documentElement.requestFullscreen) {
+      try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch (_) { /* responsive presentation mode still works */ }
+    } else if (!active && document.fullscreenElement && document.exitFullscreen) {
+      try { await document.exitFullscreen(); } catch (_) { /* no-op */ }
+    }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('presentation-mode')) {
+      document.body.classList.remove('presentation-mode');
+      document.getElementById('presentBtn').textContent = '⛶ Present';
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (overview.classList.contains('open')) {
+      if (event.key === 'Escape') overview.classList.remove('open');
+      return;
+    }
+    if (['ArrowRight','PageDown',' '].includes(event.key)) { event.preventDefault(); goTo(index + 1); }
+    if (['ArrowLeft','PageUp'].includes(event.key)) { event.preventDefault(); goTo(index - 1); }
+    if (event.key === 'Home') goTo(0);
+    if (event.key === 'End') goTo(slides.length - 1);
+    if (event.key.toLowerCase() === 'n' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) document.getElementById('notesBtn').click();
+  });
+  goTo(0);
+})();
+</script>
+</body>
+</html>

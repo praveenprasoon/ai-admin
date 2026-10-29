@@ -1,3 +1,26 @@
+I wrote a reusable prompt for updating the blueprint in VS Code, saved as sdd-blueprint-update.prompt.md. I haven’t run it in Copilot, so treat the setup steps below as my best understanding of how VS Code handles prompt files.
+
+Setup
+
+Put the file at .github/prompts/sdd-blueprint-update.prompt.md next to the latest HTML. If you want the same rules applied to every chat, copy its content into .github/copilot-instructions.md.
+In Copilot Chat, switch to Agent mode and pick the model. I can’t confirm an “Opus 4.8” model exists, so choose the strongest Opus model your Copilot plan lists.
+Type /sdd-blueprint-update and answer the “task” prompt, or attach the HTML with #file. If VS Code complains about the header lines at the top of the file, delete them, since the supported keys vary by version.
+
+Working on one navigation item at a time
+The prompt describes how the file is organised, so Copilot doesn’t need the whole file in its head.
+
+Section ids: each slide is a <section id="…">. Press Ctrl+F and search id="kvers" to jump to it, or name the id in your request (for example, “Only edit #kvers”).
+Groups and labels: the sidebar and the presentation rail each keep their own copy of the group list (GR) and labels (NM). The prompt tells Copilot to update both whenever it adds, renames or moves a section.
+Each section’s script: each animated section has its own script block with a unique ID prefix, so edits stay local.
+Verification: the prompt asks Copilot to check script syntax, duplicate IDs, links and nav entries, run a browser test if it can, and say plainly if it couldn’t.
+
+Turning a flat sequence into a flow diagram
+The prompt has a conversion section with the layout rules. Paste your numbered list or Mermaid diagram after a request like this:
+
+Convert the sequence below into a formatted flow diagram in the style of the Agentic workflow section. Classify each step as agent, human, test or scan, gate or release. Output only data arrays (nodes, edges, fail loops, steps) and plug them into the existing renderer. Add a red fail loop for every gate and a named decision for every human step.
+
+Copilot then reuses the same diagram renderer as the executive view and agentic workflow, so it comes out with the dashed-border zones, human icons, diamond gates and Replay controls rather than a plain sequence.
+
 ---
 mode: agent
 description: Update the Enterprise SDD / ADLC blueprint HTML (one section at a time) and keep navigation, presentation mode and diagrams consistent
